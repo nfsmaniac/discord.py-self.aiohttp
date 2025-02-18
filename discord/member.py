@@ -394,12 +394,12 @@ class Member(discord.abc.Messageable, discord.abc.Connectable, _UserTag):
         # Some changes are optional
         # If they aren't in the payload then they didn't change
         try:
-            self.nick = data['nick']
+            self.nick = data['nick']  # pyright: ignore[reportTypedDictNotRequiredAccess]
         except KeyError:
             pass
 
         try:
-            self.pending = data['pending']
+            self.pending = data['pending']  # pyright: ignore[reportTypedDictNotRequiredAccess]
         except KeyError:
             pass
 
