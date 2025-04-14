@@ -5664,9 +5664,27 @@ of :class:`enum.Enum`.
 
     .. versionadded:: 2.0
 
+    .. attribute:: amazon_music
+
+        The user has an Amazon Music connection.
+
+        .. versionadded:: 2.1
+
     .. attribute:: battle_net
 
         The user has a Battle.net connection.
+
+    .. attribute:: bluesky
+
+        The user has a Bluesky connection.
+
+        .. versionadded:: 2.1
+
+    .. attribute:: bungie
+
+        The user has a Bungie connection.
+
+       .. versionadded:: 2.1
 
     .. attribute:: contacts
 
@@ -5675,6 +5693,12 @@ of :class:`enum.Enum`.
     .. attribute:: crunchyroll
 
         The user has a Crunchyroll connection.
+
+    .. attribute:: domain
+
+        The user has a domain connection.
+
+        .. versionadded:: 2.1
 
     .. attribute:: ebay
 
@@ -5702,6 +5726,12 @@ of :class:`enum.Enum`.
 
         The user has a League of Legends connection.
 
+    .. attribute:: mastodon
+
+        The user has a Mastodon connection.
+
+        .. versionadded:: 2.1
+
     .. attribute:: paypal
 
         The user has a PayPal connection.
@@ -5710,17 +5740,31 @@ of :class:`enum.Enum`.
 
         The user has a PlayStation connection.
 
+    .. attribute:: playstation_stg
+
+        The user has a PlayStation staging connection.
+
+        .. versionadded:: 2.1
+
     .. attribute:: reddit
 
         The user has a Reddit connection.
+
+    .. attribute:: roblox
+
+        The user has a Roblox connection.
+
+        .. versionadded:: 2.1
 
     .. attribute:: riot_games
 
         The user has a Riot Games connection.
 
-    .. attribute:: samsung
+    .. attribute:: soundcloud
 
-        The user has a Samsung Account connection.
+        The user has a SoundCloud connection.
+
+        .. versionadded:: 2.1
 
     .. attribute:: spotify
 
