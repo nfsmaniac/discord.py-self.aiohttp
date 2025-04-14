@@ -392,6 +392,7 @@ class Route:
         self.guild_id: Optional[Snowflake] = parameters.get('guild_id')
         self.webhook_id: Optional[Snowflake] = parameters.get('webhook_id')
         self.webhook_token: Optional[str] = parameters.get('webhook_token')
+        self.application_id: Optional[Snowflake] = parameters.get('application_id')
 
     @property
     def key(self) -> str:
@@ -406,6 +407,8 @@ class Route:
 
         This needs to be appended to a bucket hash to constitute as a full rate limit key.
         """
+        if self.path.startswith('/users/@me'):
+            return ''
         return '+'.join(
             str(k) for k in (self.channel_id, self.guild_id, self.webhook_id, self.webhook_token) if k is not None
         )
@@ -2356,7 +2359,7 @@ class HTTPClient:
         return self.request(Route('GET', '/guilds/{guild_id}/integrations', guild_id=guild_id), params=params)
 
     def create_integration(
-        self, guild_id: Snowflake, type: integration.IntegrationType, id: int, *, reason: Optional[str] = None
+        self, guild_id: Snowflake, type: integration.IntegrationType, id: Snowflake, *, reason: Optional[str] = None
     ) -> Response[None]:
         payload = {
             'type': type,
@@ -2394,6 +2397,9 @@ class HTTPClient:
             ),
             reason=reason,
         )
+
+    def join_integration(self, integration_id: Snowflake) -> Response[None]:
+        return self.request(Route('POST', '/integrations/{integration_id}/join', integration_id=integration_id))
 
     def get_audit_logs(
         self,
