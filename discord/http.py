@@ -3580,8 +3580,14 @@ class HTTPClient:
     def get_activity_statistics(self) -> Response[List[application.UserActivityStatistics]]:
         return self.request(Route('GET', '/users/@me/activities/statistics/applications'))
 
-    def get_global_activity_statistics(self) -> Response[List[application.GlobalActivityStatistics]]:
-        return self.request(Route('GET', '/activities'))
+    def get_global_activity_statistics(
+        self, *, with_users: bool = False, with_applications: bool = False
+    ) -> Response[List[application.GlobalActivityStatistics]]:
+        params = {
+            'with_users': str(with_users).lower(),
+            'with_applications': str(with_applications).lower(),
+        }
+        return self.request(Route('GET', '/activities'), params=params)
 
     def get_app_manifest_labels(self, application_id: Snowflake) -> Response[List[application.ManifestLabel]]:
         return self.request(Route('GET', '/applications/{application_id}/manifest-labels', application_id=application_id))

@@ -939,6 +939,7 @@ class Client:
         data = await state.http.static_login(token.strip())
         state.analytics_token = data.get('analytics_token', '')
         state.user = ClientUser(state=state, data=data)
+        state._users[state.user.id] = state.user  # type: ignore
         await self.setup_hook()
 
     async def connect(self, *, reconnect: bool = True) -> None:
@@ -3670,7 +3671,9 @@ class Client:
         data = await state.http.get_activity_statistics()
         return [ApplicationActivityStatistics(state=state, data=d) for d in data]
 
-    async def global_activity_statistics(self) -> List[ApplicationActivityStatistics]:
+    async def global_activity_statistics(
+        self, *, with_users: bool = True, with_applications: bool = True
+    ) -> List[ApplicationActivityStatistics]:
         """|coro|
 
         Retrieves the available activity usage statistics for the games your friends and
@@ -3693,7 +3696,7 @@ class Client:
             The activity statistics.
         """
         state = self._connection
-        data = await state.http.get_global_activity_statistics()
+        data = await state.http.get_global_activity_statistics(with_users=with_users, with_applications=with_applications)
         return [ApplicationActivityStatistics(state=state, data=d) for d in data]
 
     async def payment_sources(self) -> List[PaymentSource]:

@@ -833,13 +833,16 @@ class ApplicationActivityStatistics:
     .. versionchanged:: 2.1
 
         ``updated_at`` was renamed to ``last_played_at``.
+        ``application`` was turned into a property.
 
     Attributes
     -----------
     application_id: :class:`int`
-        The ID of the application.
+        The ID of the application the statistics are for.
+    application: Optional[:class:`PartialApplication`]
+        The application the statistics are for, if available.
     user_id: :class:`int`
-        The ID of the user.
+        The ID of the user associated with the statistics.
     duration: :class:`int`
         How long the user has ever played the game in seconds.
         This will be the last session duration for global statistics, and the total duration otherwise.
@@ -855,17 +858,31 @@ class ApplicationActivityStatistics:
         When the user last played the game.
     """
 
-    __slots__ = ('application_id', 'user_id', 'duration', 'sku_duration', 'first_played_at', 'last_played_at', '_state')
+    __slots__ = (
+        'application_id',
+        'application',
+        '_user',
+        'user_id',
+        'duration',
+        'sku_duration',
+        'first_played_at',
+        'last_played_at',
+        '_state',
+    )
 
     def __init__(
         self,
         *,
         data: Union[ApplicationActivityStatisticsPayload, GlobalActivityStatisticsPayload, UserActivityStatisticsPayload],
         state: ConnectionState,
-        application_id: Optional[int] = None,
+        application: Optional[PartialApplication] = None,
     ) -> None:
         self._state = state
-        self.application_id = application_id or int(data['application_id'])  # type: ignore
+        self.application_id = application.id if application else int(data['application_id'])  # type: ignore
+        self.application: Optional[PartialApplication] = (
+            application or (PartialApplication(state=state, data=data['application']) if 'application' in data else None)
+        )
+        self._user = state.create_user(data['user']) if 'user' in data else None
         self.user_id: int = int(data['user_id']) if 'user_id' in data else state.self_id  # type: ignore
         self.duration: int = data.get('total_duration', data.get('duration', 0))
         self.sku_duration: int = data.get('total_discord_sku_duration', 0)
@@ -880,21 +897,7 @@ class ApplicationActivityStatistics:
     @property
     def user(self) -> Optional[User]:
         """Optional[:class:`User`]: Returns the user associated with the statistics, if available."""
-        return self._state.get_user(self.user_id)
-
-    async def application(self) -> PartialApplication:
-        """|coro|
-
-        Returns the application associated with the statistics.
-
-        Raises
-        ------
-        HTTPExceptionq
-            Fetching the application failed.
-        """
-        state = self._state
-        data = await state.http.get_partial_application(self.application_id)
-        return PartialApplication(state=state, data=data)
+        return self._user or self._state.get_user(self.user_id)
 
 
 class ManifestLabel(Hashable):
@@ -2189,7 +2192,7 @@ class PartialApplication(_BaseApplication):
         state = self._state
         app_id = self.id
         data = await state.http.get_app_activity_statistics(app_id)
-        return [ApplicationActivityStatistics(data=activity, state=state, application_id=app_id) for activity in data]
+        return [ApplicationActivityStatistics(data=activity, state=state, application=self) for activity in data]
 
 
 class Application(PartialApplication):
