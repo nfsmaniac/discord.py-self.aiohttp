@@ -3574,6 +3574,34 @@ class Client:
         data = await state.http.search_companies(query)
         return [Company(data=d) for d in data]
 
+    async def fetch_company(self, company_id: int, /) -> Company:
+        """|coro|
+
+        Retrieves a company with the given ID.
+
+        .. versionadded:: 2.1
+
+        Parameters
+        -----------
+        company_id: :class:`int`
+            The ID of the company to fetch.
+
+        Raises
+        -------
+        NotFound
+            The company was not found.
+        HTTPException
+            Retrieving the company failed.
+
+        Returns
+        -------
+        :class:`.Company`
+            The retrieved company.
+        """
+        state = self._connection
+        data = await state.http.get_company(company_id)
+        return Company(data=data)
+
     async def activity_statistics(self) -> List[ApplicationActivityStatistics]:
         """|coro|
 

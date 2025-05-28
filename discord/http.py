@@ -3449,6 +3449,9 @@ class HTTPClient:
         data = self.request(Route('GET', '/companies'), params=params)
         return data or []
 
+    def get_company(self, company_id: Snowflake) -> Response[application.Company]:
+        return self.request(Route('GET', '/company/{company_id}', company_id=company_id))
+
     def get_team_payouts(
         self, team_id: Snowflake, *, limit: int = 96, before: Optional[Snowflake] = None
     ) -> Response[List[team.TeamPayout]]:
