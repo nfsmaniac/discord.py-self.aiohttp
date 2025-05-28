@@ -3445,7 +3445,7 @@ class HTTPClient:
 
     def search_companies(self, query: str) -> Response[List[application.Company]]:
         # This endpoint 204s without a query?
-        params = {'query': query}
+        params = {'name': query}
         data = self.request(Route('GET', '/companies'), params=params)
         return data or []
 
