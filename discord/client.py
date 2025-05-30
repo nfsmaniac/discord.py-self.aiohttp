@@ -38,6 +38,7 @@ from typing import (
     Generator,
     List,
     Literal,
+    NamedTuple,
     Optional,
     overload,
     Sequence,
@@ -147,6 +148,11 @@ class _LoopSentinel:
 
 
 _loop: Any = _LoopSentinel()
+
+
+class RTCRegion(NamedTuple):
+    region: str
+    ips: List[str]
 
 
 class Client:
@@ -3109,7 +3115,7 @@ class Client:
         data = await self.http.get_country_code()
         return data['country_code']
 
-    async def fetch_preferred_rtc_regions(self) -> List[Tuple[str, List[str]]]:
+    async def fetch_preferred_rtc_regions(self) -> List[RTCRegion]:
         """|coro|
 
         Retrieves the preferred RTC regions of the client.
@@ -3130,9 +3136,10 @@ class Client:
         -------
         List[Tuple[:class:`str`, List[:class:`str`]]]
             The region name and list of IPs for the closest voice regions.
+            This is also accessible as a namedtuple with ``region`` and ``ips`` attributes.
         """
         data = await self.http.get_preferred_voice_regions()
-        return [(v['region'], v['ips']) for v in data]
+        return [RTCRegion(v['region'], v['ips']) for v in data]
 
     async def create_dm(self, user: Snowflake, /) -> DMChannel:
         """|coro|
