@@ -3142,13 +3142,13 @@ class HTTPClient:
         user_id: Optional[Snowflake] = None,
         guild_id: Optional[Snowflake] = None,
         sku_ids: Optional[Sequence[Snowflake]] = None,
-        with_payments: bool = False,
         exclude_ended: bool = False,
+        exclude_deleted: bool = True,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
         limit: int = 100,
     ) -> Response[List[entitlements.Entitlement]]:
-        params: Dict[str, Any] = {'with_payments': str(with_payments).lower(), 'exclude_ended': str(exclude_ended).lower()}
+        params: Dict[str, Any] = {'exclude_ended': str(exclude_ended).lower(), 'exclude_deleted': str(exclude_deleted).lower()}
         if user_id:
             params['user_id'] = user_id
         if guild_id:
@@ -3167,17 +3167,15 @@ class HTTPClient:
         )
 
     def get_app_entitlement(
-        self, application_id: Snowflake, entitlement_id: Snowflake, with_payments: bool = False
+        self, application_id: Snowflake, entitlement_id: Snowflake
     ) -> Response[entitlements.Entitlement]:
-        params = {'with_payments': str(with_payments).lower()}
         return self.request(
             Route(
                 'GET',
                 '/applications/{application_id}/entitlements/{entitlement_id}',
                 application_id=application_id,
                 entitlement_id=entitlement_id,
-            ),
-            params=params,
+            )
         )
 
     def delete_app_entitlement(self, application_id: Snowflake, entitlement_id: Snowflake) -> Response[None]:
@@ -3213,33 +3211,35 @@ class HTTPClient:
         )
 
     def get_user_entitlements(
-        self, with_sku: bool = True, with_application: bool = True, entitlement_type: Optional[int] = None
+        self, with_sku: bool = True, with_application: bool = True, exclude_ended: bool = False, entitlement_type: Optional[int] = None
     ) -> Response[List[entitlements.Entitlement]]:
-        params: Dict[str, Any] = {'with_sku': str(with_sku).lower(), 'with_application': str(with_application).lower()}
+        params: Dict[str, Any] = {'with_sku': str(with_sku).lower(), 'with_application': str(with_application).lower(), 'exclude_ended': str(exclude_ended).lower()}
         if entitlement_type is not None:
             params['entitlement_type'] = entitlement_type
 
         return self.request(Route('GET', '/users/@me/entitlements'), params=params)
 
     def get_giftable_entitlements(
-        self, country_code: Optional[str] = None, payment_source_id: Optional[Snowflake] = None
+        self, country_code: Optional[str] = None
     ) -> Response[List[entitlements.Entitlement]]:
         params = {}
         if country_code:
             params['country_code'] = country_code
-        if payment_source_id:
-            params['payment_source_id'] = payment_source_id
 
         return self.request(Route('GET', '/users/@me/entitlements/gifts'), params=params)
 
     def get_guild_entitlements(
-        self, guild_id: Snowflake, with_sku: bool = True, with_application: bool = True, exclude_deleted: bool = False
+        self, guild_id: Snowflake, with_sku: bool = True, with_application: bool = True, exclude_ended: bool = False, exclude_deleted: bool = True, entitlement_type: Optional[int] = None
     ) -> Response[List[entitlements.Entitlement]]:
         params: Dict[str, Any] = {
             'with_sku': str(with_sku).lower(),
             'with_application': str(with_application).lower(),
+            'exclude_ended': str(exclude_ended).lower(),
             'exclude_deleted': str(exclude_deleted).lower(),
         }
+        if entitlement_type is not None:
+            params['entitlement_type'] = entitlement_type
+
         return self.request(Route('GET', '/guilds/{guild_id}/entitlements', guild_id=guild_id), params=params)
 
     def get_app_skus(
@@ -3930,7 +3930,7 @@ class HTTPClient:
         payment_source_token: Optional[str] = None,
         purchase_token: Optional[str] = None,
         return_url: Optional[str] = None,
-        gateway_checkout_context: Optional[str] = None,
+        gateway_checkout_context: Optional[Dict[str, Any]] = None,
     ) -> Response[store.SKUPurchase]:
         payload = {
             'gift': gift,
@@ -4151,7 +4151,7 @@ class HTTPClient:
         code: str,
         payment_source_id: Optional[Snowflake] = None,
         channel_id: Optional[Snowflake] = None,
-        gateway_checkout_context: Optional[str] = None,
+        gateway_checkout_context: Optional[Dict[str, Any]] = None,
     ) -> Response[entitlements.Entitlement]:
         payload: Dict[str, Any] = {'channel_id': channel_id, 'gateway_checkout_context': gateway_checkout_context}
         if payment_source_id:
@@ -4233,7 +4233,7 @@ class HTTPClient:
         payment_source_token: Optional[str] = None,
         return_url: Optional[str] = None,
         purchase_token: Optional[str] = None,
-        gateway_checkout_context: Optional[str] = None,
+        gateway_checkout_context: Optional[Dict[str, Any]] = None,
         code: Optional[str] = None,
         metadata: Optional[dict] = None,
     ) -> Response[subscriptions.Subscription]:
@@ -4495,6 +4495,7 @@ class HTTPClient:
         code_challenge_method: Optional[str] = None,
         code_challenge: Optional[str] = None,
         state: Optional[str] = None,
+        nonce: Optional[str] = None,
     ) -> Response[oauth2.OAuth2Authorization]:
         params = {'client_id': application_id, 'scope': ' '.join(scopes)}
         if response_type:
@@ -4507,6 +4508,8 @@ class HTTPClient:
             params['code_challenge'] = code_challenge
         if state:
             params['state'] = state
+        if nonce:
+            params['nonce'] = nonce 
 
         return self.request(Route('GET', '/oauth2/authorize'), params=params)
 
@@ -4519,6 +4522,7 @@ class HTTPClient:
         code_challenge_method: Optional[str] = None,
         code_challenge: Optional[str] = None,
         state: Optional[str] = None,
+        nonce: Optional[str] = None,
         guild_id: Optional[Snowflake] = None,
         webhook_channel_id: Optional[Snowflake] = None,
         permissions: Optional[Snowflake] = None,
@@ -4535,6 +4539,8 @@ class HTTPClient:
             params['code_challenge'] = code_challenge
         if state:
             params['state'] = state
+        if nonce:
+            params['nonce'] = nonce
         if guild_id:
             payload['guild_id'] = str(guild_id)
             payload['permissions'] = '0'

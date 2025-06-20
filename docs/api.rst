@@ -6242,7 +6242,6 @@ of :class:`enum.Enum`.
 
         A guild product was purchased.
 
-
 .. class:: MessageReferenceType
 
     Represents the type of a message reference.
@@ -6268,6 +6267,32 @@ of :class:`enum.Enum`.
     .. attribute:: reply
 
         An alias for :attr:`.default`.
+
+.. class:: PromotionType
+
+    Represents the type of a promotion.
+
+    .. versionadded:: 2.1
+
+    .. attribute:: bogo
+
+        A "buy one get one" offer.
+
+    .. attribute:: partner
+
+        A partner promotion.
+
+    .. attribute:: third_party_inbound
+
+        A third-party inbound promotion.
+
+    .. attribute:: third_party_outbound
+
+        A third-party outbound promotion.
+
+    .. attribute:: marketing_moment
+
+        A marketing moment promotion.
 
 .. _discord-api-audit-logs:
 
@@ -7446,11 +7471,6 @@ Entitlement
 .. attributetable:: Entitlement
 
 .. autoclass:: Entitlement()
-    :members:
-
-.. attributetable:: EntitlementPayment
-
-.. autoclass:: EntitlementPayment()
     :members:
 
 .. attributetable:: Gift

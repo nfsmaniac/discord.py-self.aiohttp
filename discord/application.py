@@ -3555,8 +3555,7 @@ class Application(PartialApplication):
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
         oldest_first: bool = MISSING,
-        with_payments: bool = False,
-        exclude_ended: bool = False,
+        include_ended: bool = False,
     ) -> AsyncIterator[Entitlement]:
         """Returns an :term:`asynchronous iterator` that enables receiving this application's entitlements.
 
@@ -3600,10 +3599,16 @@ class Application(PartialApplication):
         oldest_first: :class:`bool`
             If set to ``True``, return entitlements in oldest->newest order. Defaults to ``True`` if
             ``after`` is specified, otherwise ``False``.
-        with_payments: :class:`bool`
-            Whether to include partial payment info in the response.
-        exclude_ended: :class:`bool`
+        include_ended: :class:`bool`
             Whether to exclude entitlements that have ended.
+
+            .. versionchanged:: 2.1
+
+                Renamed from ``exclude_ended`` to ``include_ended``.
+        include_deleted: :class:`bool`
+            Whether to include deleted entitlements in the results.
+
+            .. versionadded:: 2.1
 
         Raises
         ------
@@ -3627,8 +3632,8 @@ class Application(PartialApplication):
                 user_id=user.id if user else None,
                 guild_id=guild.id if guild else None,
                 sku_ids=[sku.id for sku in skus] if skus else None,
-                with_payments=with_payments,
-                exclude_ended=exclude_ended,
+                exclude_ended=not include_ended,
+                exclude_deleted=not include_ended,
             )
 
             if data:
@@ -3648,8 +3653,8 @@ class Application(PartialApplication):
                 user_id=user.id if user else None,
                 guild_id=guild.id if guild else None,
                 sku_ids=[sku.id for sku in skus] if skus else None,
-                with_payments=with_payments,
-                exclude_ended=exclude_ended,
+                exclude_ended=not include_ended,
+                exclude_deleted=not include_ended,
             )
             if data:
                 if limit is not None:
