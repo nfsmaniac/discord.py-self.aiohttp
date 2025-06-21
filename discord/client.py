@@ -4526,7 +4526,12 @@ class Client:
         return data['location']
 
     async def entitlements(
-        self, *, with_sku: bool = True, with_application: bool = True, include_ended: bool = True, entitlement_type: Optional[EntitlementType] = None
+        self,
+        *,
+        with_sku: bool = True,
+        with_application: bool = True,
+        include_ended: bool = True,
+        entitlement_type: Optional[EntitlementType] = None,
     ) -> List[Entitlement]:
         """|coro|
 
