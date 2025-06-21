@@ -67,8 +67,6 @@ def test_from_str(value, expected):
 def test_from_str_failures(value):
     with pytest.raises(ValueError):
         discord.Colour.from_str(value)
-<<<<<<< HEAD
-=======
 
 
 @pytest.mark.parametrize(
@@ -130,4 +128,3 @@ def test_static_colours(value, expected):
 )
 def test_colour_properties(value, property, expected):
     assert getattr(value, property) == expected
->>>>>>> e84edf47 (Add colours for new Discord themes)
