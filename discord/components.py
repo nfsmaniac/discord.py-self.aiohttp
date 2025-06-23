@@ -304,7 +304,7 @@ class SelectMenu(Component):
         """:class:`ComponentType`: The type of component."""
         return ComponentType.select
 
-    def to_dict(self, options: Optional[Tuple[SelectOption]] = None) -> SelectInteractionData:
+    def to_dict(self, options: Optional[Tuple[SelectOption, ...]] = None) -> SelectInteractionData:
         return {
             'component_type': self.type.value,
             'custom_id': self.custom_id,

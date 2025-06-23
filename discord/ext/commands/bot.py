@@ -1021,7 +1021,7 @@ class BotBase(GroupMixin[None]):
 
         if callable(prefix):
             # self will be a Bot or AutoShardedBot
-            ret = await discord.utils.maybe_coroutine(prefix, self, message)  # type: ignore
+            ret = await discord.utils.maybe_coroutine(prefix, self, message)
 
         if not isinstance(ret, str):
             try:

@@ -30,7 +30,6 @@ from .sticker import GuildSticker
 from .snowflake import Snowflake
 from .channel import GuildChannel, StageInstance
 from .voice import VoiceState
-from .welcome_screen import WelcomeScreen
 from .activity import PartialPresenceUpdate
 from .role import Role
 from .member import MemberWithUser

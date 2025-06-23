@@ -887,7 +887,7 @@ async def sane_wait_for(futures: Iterable[Awaitable[T]], *, timeout: Optional[fl
 def get_slots(cls: Type[Any]) -> Iterator[str]:
     for mro in reversed(cls.__mro__):
         try:
-            yield from mro.__slots__  # type: ignore
+            yield from mro.__slots__
         except AttributeError:
             continue
 
@@ -1361,7 +1361,7 @@ def evaluate_annotation(
         args = tp.__args__
         if not hasattr(tp, '__origin__'):
             if PY_310 and tp.__class__ is types.UnionType:  # type: ignore
-                converted = Union[args]  # type: ignore
+                converted = Union[args]
                 return evaluate_annotation(converted, globals, locals, cache)
 
             return tp
