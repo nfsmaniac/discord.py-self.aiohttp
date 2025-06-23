@@ -43,6 +43,7 @@ class PartialMember(TypedDict):
 
 class Member(PartialMember, total=False):
     avatar: Optional[str]
+    banner: Optional[str]
     user: PartialUser
     nick: str
     premium_since: Optional[str]
@@ -68,7 +69,6 @@ class MemberWithPresence(MemberWithUser):
 
 class PrivateMember(MemberWithUser):
     bio: str
-    banner: Optional[str]
 
 
 class UserWithMember(PartialUser, total=False):
