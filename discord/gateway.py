@@ -375,11 +375,7 @@ class DiscordWebSocket:
             ws.log_receive = ws.debug_log_receive
 
         client._connection._update_references(ws)
-
         _log.debug('Connected to %s.', gateway)
-
-        # Poll for Hello
-        await ws.poll_event()
 
         if not resume:
             await ws.identify()
