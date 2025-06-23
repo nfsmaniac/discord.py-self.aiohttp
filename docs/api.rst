@@ -719,14 +719,33 @@ Relationships
 Notes
 ~~~~~~
 
-.. function:: on_note_update(note)
+.. function:: on_note_update(user, note)
 
     Called when a :class:`User`\'s note is updated.
 
     .. versionadded:: 2.0
 
+    .. versionchanged:: 2.1
+
+        Event signature was changed to include the ``user`` parameter.
+
+    :param user: The user whose note was updated.
+    :type user: :class:`User`
     :param note: The note that was updated.
-    :type note: :class:`Note`
+    :type note: :class:`str`
+
+.. function:: on_raw_note_update(user_id, note)
+
+    Called when a :class:`User`\'s note is updated.
+    Unlike :func:`on_note_update`, this is called regardless
+    of the user being in the internal user cache or not.
+
+    .. versionadded:: 2.1
+
+    :param user_id: The ID of the user whose note was updated.
+    :type user_id: :class:`int`
+    :param note: The note that was updated.
+    :type note: :class:`str`
 
 OAuth2
 ~~~~~~~
@@ -7211,11 +7230,6 @@ User
 .. attributetable:: ProfileBadge
 
 .. autoclass:: ProfileBadge()
-    :members:
-
-.. attributetable:: Note
-
-.. autoclass:: Note()
     :members:
 
 .. attributetable:: RecentAvatar

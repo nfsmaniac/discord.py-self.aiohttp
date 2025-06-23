@@ -42,6 +42,7 @@ from .errors import ClientException
 from .colour import Colour
 from .object import Object
 from .flags import MemberFlags
+from .voice_client import VoiceClient
 
 __all__ = (
     'VoiceState',
@@ -56,6 +57,7 @@ if TYPE_CHECKING:
     from .activity import ActivityTypes
     from .asset import Asset
     from .channel import DMChannel, VoiceChannel, StageChannel, GroupChannel
+    from .client import Client
     from .flags import PublicUserFlags
     from .guild import Guild
     from .profile import MemberProfile
@@ -74,10 +76,8 @@ if TYPE_CHECKING:
     from .message import Message
     from .role import Role
     from .types.voice import BaseVoiceState as VoiceStatePayload
-    from .user import Note
     from .relationship import Relationship
     from .calls import PrivateCall
-    from .enums import PremiumType
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
     ConnectableChannel = Union[VocalGuildChannel, DMChannel, GroupChannel]
@@ -293,7 +293,7 @@ class Member(discord.abc.Messageable, discord.abc.Connectable, _UserTag):
         avatar_decoration: Optional[Asset]
         avatar_decoration_sku_id: Optional[int]
         avatar_decoration_expires_at: Optional[datetime.datetime]
-        note: Note
+        is_pomelo: Callable[[], bool]
         relationship: Optional[Relationship]
         is_friend: Callable[[], bool]
         is_blocked: Callable[[], bool]
@@ -303,7 +303,11 @@ class Member(discord.abc.Messageable, discord.abc.Connectable, _UserTag):
         block: Callable[[], Awaitable[None]]
         unblock: Callable[[], Awaitable[None]]
         remove_friend: Callable[[], Awaitable[None]]
+        send_friend_request: Callable[[], Awaitable[None]]
         fetch_mutual_friends: Callable[[], Awaitable[List[User]]]
+        fetch_note: Callable[[], Awaitable[Optional[str]]]
+        set_note: Callable[[Optional[str]], Awaitable[None]]
+        delete_note: Callable[[], Awaitable[None]]
         public_flags: PublicUserFlags
         premium_type: Optional[PremiumType]
         banner: Optional[Asset]
@@ -435,6 +439,22 @@ class Member(discord.abc.Messageable, discord.abc.Connectable, _UserTag):
     async def _get_channel(self) -> DMChannel:
         ch = await self.create_dm()
         return ch
+
+    @utils.copy_doc(discord.abc.Connectable.connect)
+    async def connect(
+        self,
+        *,
+        timeout: float = 60.0,
+        reconnect: bool = True,
+        cls: Callable[[Client, discord.abc.VocalChannel], discord.abc.T] = VoiceClient,
+        ring: bool = True,
+    ) -> discord.abc.T:
+        channel = await self._get_channel()
+        ret = await super().connect(timeout=timeout, reconnect=reconnect, cls=cls, _channel=channel)
+
+        if ring:
+            await channel._initial_ring()
+        return ret
 
     @property
     def presence(self) -> Presence:
