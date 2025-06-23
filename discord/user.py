@@ -1021,7 +1021,7 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
             self._avatar,
             self.discriminator,
             self._public_flags,
-            self._avatar_decoration,
+            self._avatar_decoration_data,
             self.global_name,
         )
         modified = (
@@ -1029,7 +1029,7 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
             user.get('avatar'),
             user['discriminator'],
             user.get('public_flags', 0),
-            (user.get('avatar_decoration_data') or {}).get('asset'),
+            user.get('avatar_decoration_data'),
             user.get('global_name'),
         )
         if original != modified:
@@ -1039,7 +1039,7 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
                 self._avatar,
                 self.discriminator,
                 self._public_flags,
-                self._avatar_decoration,
+                self._avatar_decoration_data,
                 self.global_name,
             ) = modified
             # Signal to dispatch user_update
