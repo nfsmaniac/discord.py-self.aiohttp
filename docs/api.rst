@@ -555,17 +555,6 @@ Entitlements
     :param application: The library entry that was updated.
     :type application: :class:`LibraryApplication`
 
-.. function:: on_achievement_update(achievement, percent_complete)
-
-    Called when an achievement is updated.
-
-    .. versionadded:: 2.0
-
-    :param achievement: The achievement that was updated.
-    :type achievement: :class:`Achievement`
-    :param percent_complete: The percentage of the acheivement completed.
-    :type percent_complete: :class:`int`
-
 .. function:: on_entitlement_create(entitlement)
 
     Called when an entitlement is added to your account.
@@ -7495,11 +7484,6 @@ Entitlement
 .. attributetable:: GiftBatch
 
 .. autoclass:: GiftBatch()
-    :members:
-
-.. attributetable:: Achievement
-
-.. autoclass:: Achievement()
     :members:
 
 Library
