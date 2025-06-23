@@ -29,6 +29,10 @@ from typing import Optional, Tuple, Dict
 import argparse
 import sys
 from pathlib import Path, PurePath, PureWindowsPath
+from typing import Dict, Optional, Tuple
+
+import aiohttp
+from discord_protos import __version__ as protos_version  # Avoid breaking selfcord
 
 import discord
 import importlib.metadata
@@ -47,6 +51,7 @@ def show_version() -> None:
         if version:
             entries.append(f'    - discord.py-self metadata: v{version}')
 
+    entries.append(f'    - discord-protos v{protos_version}')
     entries.append(f'- aiohttp v{aiohttp.__version__}')
     uname = platform.uname()
     entries.append('- system info: {0.system} {0.release} {0.version}'.format(uname))
@@ -235,8 +240,6 @@ def to_path(parser: argparse.ArgumentParser, name: str, *, replace_spaces: bool 
 def newbot(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
     new_directory = to_path(parser, args.directory) / to_path(parser, args.name)
 
-    # as a note exist_ok for Path is a 3.5+ only feature
-    # since we already checked above that we're >3.5
     try:
         new_directory.mkdir(exist_ok=True, parents=True)
     except OSError as exc:
