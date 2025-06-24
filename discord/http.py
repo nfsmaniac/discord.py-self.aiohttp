@@ -916,7 +916,7 @@ class HTTPClient:
                             if isinstance(data, str):
                                 # Cloudflare ban
                                 is_global = False
-                                retry_after = int(response.headers.get('Retry-After', '0'))
+                                retry_after = float(response.headers.get('Retry-After', '0'))
                                 if not retry_after:
                                     # Unhandleable
                                     result = re.search(r'<span>(\d{3,4})</span>', data)
@@ -924,7 +924,7 @@ class HTTPClient:
                                     raise HTTPException(response, f'Cloudflare ban (code: {code})')
                             else:
                                 is_global: bool = data.get('global', False)
-                                retry_after: float = data.get('retry_after', int(response.headers.get('Retry-After', 0)))
+                                retry_after: float = data.get('retry_after', float(response.headers.get('Retry-After', 0)))
 
                             # Cloudflare rate limit
                             is_cloudflare = not response.headers.get('Via')
