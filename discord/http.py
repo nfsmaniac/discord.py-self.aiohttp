@@ -607,6 +607,7 @@ class HTTPClient:
         locale: Callable[[], str] = lambda: 'en-US',
         debug_options: Optional[Sequence[str]] = None,
         rpc_proxy: Optional[str] = None,
+        proxy_gateway: bool = True,
     ) -> None:
         self.connector: aiohttp.BaseConnector = connector or MISSING
         self.__session: aiohttp.ClientSession = MISSING
@@ -632,6 +633,7 @@ class HTTPClient:
         self.get_locale: Callable[[], str] = locale
         self.debug_options: Optional[Sequence[str]] = debug_options
         self.rpc_proxy: Optional[str] = rpc_proxy
+        self.proxy_gateway: bool = proxy_gateway
 
         self.tracer = None
         if debug_options and 'trace' in debug_options:
@@ -678,8 +680,6 @@ class HTTPClient:
 
     async def ws_connect(self, url: str, *, compress: int = 0) -> aiohttp.ClientWebSocketResponse:
         kwargs: Dict[str, Any] = {
-            'proxy_auth': self.proxy_auth,
-            'proxy': self.proxy,
             'max_msg_size': 0,
             'timeout': 30.0,
             'autoclose': False,
@@ -694,6 +694,13 @@ class HTTPClient:
             },
             'compress': compress,
         }
+
+        # Proxy gateway client param - only use proxy for gateway if proxy_gateway is True
+        if self.proxy_gateway:
+            if self.proxy is not None:
+                kwargs['proxy'] = self.proxy
+            if self.proxy_auth is not None:
+                kwargs['proxy_auth'] = self.proxy_auth
 
         return await self.__session.ws_connect(url, **kwargs)
 
