@@ -2681,6 +2681,8 @@ of :class:`enum.Enum`.
         Possible attributes for :class:`AuditLogDiff`:
 
         - :attr:`~AuditLogDiff.colour`
+        - :attr:`~AuditLogDiff.secondary_colour`
+        - :attr:`~AuditLogDiff.tertiary_colour`
         - :attr:`~AuditLogDiff.mentionable`
         - :attr:`~AuditLogDiff.hoist`
         - :attr:`~AuditLogDiff.icon`
@@ -2704,6 +2706,8 @@ of :class:`enum.Enum`.
         Possible attributes for :class:`AuditLogDiff`:
 
         - :attr:`~AuditLogDiff.colour`
+        - :attr:`~AuditLogDiff.secondary_colour`
+        - :attr:`~AuditLogDiff.tertiary_colour`
         - :attr:`~AuditLogDiff.mentionable`
         - :attr:`~AuditLogDiff.hoist`
         - :attr:`~AuditLogDiff.icon`
@@ -2721,6 +2725,8 @@ of :class:`enum.Enum`.
         Possible attributes for :class:`AuditLogDiff`:
 
         - :attr:`~AuditLogDiff.colour`
+        - :attr:`~AuditLogDiff.secondary_colour`
+        - :attr:`~AuditLogDiff.tertiary_colour`
         - :attr:`~AuditLogDiff.mentionable`
         - :attr:`~AuditLogDiff.hoist`
         - :attr:`~AuditLogDiff.name`
@@ -6645,6 +6651,24 @@ AuditLogDiff
 
         :type: :class:`Colour`
 
+    .. attribute:: secondary_colour
+                   secondary_color
+
+        The secondary colour of a role.
+
+        See also :attr:`Role.secondary_colour`
+
+        :type: Optional[:class:`Colour`]
+
+    .. attribute:: tertiary_colour
+                   tertiary_color
+
+        The tertiary colour of a role.
+
+        See also :attr:`Role.tertiary_colour`
+
+        :type: Optional[:class:`Colour`]
+
     .. attribute:: hoist
 
         Whether the role is being hoisted or not.
@@ -6981,11 +7005,11 @@ AuditLogDiff
 
     .. attribute:: flags
 
-        The channel flags associated with this thread or forum post.
+        The flags associated with this channel or invite.
 
-        See also :attr:`ForumChannel.flags` and :attr:`Thread.flags`
+        See also :attr:`ForumChannel.flags` and :attr:`Invite.flags`
 
-        :type: :class:`ChannelFlags`
+        :type: Union[:class:`ChannelFlags`, :class:`InviteFlags`]
 
     .. attribute:: default_thread_slowmode_delay
 
