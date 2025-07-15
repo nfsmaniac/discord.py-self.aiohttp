@@ -2742,6 +2742,7 @@ of :class:`enum.Enum`.
         - :attr:`~AuditLogDiff.channel`
         - :attr:`~AuditLogDiff.uses`
         - :attr:`~AuditLogDiff.max_uses`
+        - :attr:`~AuditLogDiff.flags`
 
     .. attribute:: invite_update
 
@@ -2766,6 +2767,7 @@ of :class:`enum.Enum`.
         - :attr:`~AuditLogDiff.channel`
         - :attr:`~AuditLogDiff.uses`
         - :attr:`~AuditLogDiff.max_uses`
+        - :attr:`~AuditLogDiff.flags`
 
     .. attribute:: webhook_create
 

@@ -144,7 +144,7 @@ def _transform_applied_forum_tags(entry: AuditLogEntry, data: List[Snowflake]) -
 
 
 def _transform_overloaded_flags(entry: AuditLogEntry, data: int) -> Union[int, flags.ChannelFlags, flags.InviteFlags]:
-    # The `flags` key is definitely overloaded. Right now it's for channels and threads but
+    # The `flags` key is definitely overloaded. Right now it's for channels, threads and invites but
     # I am aware of `member.flags` and `user.flags` existing. However, this does not impact audit logs
     # at the moment but better safe than sorry.
     channel_audit_log_types = (
@@ -821,7 +821,6 @@ class AuditLogEntry(Hashable):
             'uses': changeset.uses,
             'flags': changeset.flags.value,
             'channel': None,  # type: ignore # the channel is passed to the Invite constructor directly
-            'inviter': changeset.inviter and changeset.inviter._to_minimal_user_json() or None,
         }
 
         obj = Invite(state=self._state, data=fake_payload, guild=self.guild, channel=changeset.channel)
