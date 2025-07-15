@@ -4287,6 +4287,12 @@ of :class:`enum.Enum`.
 
         The discount is from a premium trial.
 
+    .. attribute:: default
+
+        The discount is a default discount.
+
+        .. versionadded:: 2.1
+
 .. class:: SubscriptionInterval
 
     Represents the interval of a subscription.
@@ -4323,13 +4329,51 @@ of :class:`enum.Enum`.
 
         The plan is purchased with sale pricing.
 
-    .. attribute:: nitro_classic
+    .. attribute:: premium_tier_1
 
         The plan is purchased with Nitro Classic discounted pricing.
 
-    .. attribute:: nitro
+    .. attribute:: nitro_classic
+
+        Alias of :attr:`SubscriptionPlanPurchaseType.premium_tier_1`.
+
+    .. attribute:: premium_tier_2
 
         The plan is purchased with Nitro discounted pricing.
+
+    .. attribute:: nitro
+
+        Alias of :attr:`SubscriptionPlanPurchaseType.premium_tier_2`.
+
+    .. attribute:: mobile
+
+        The plan is purchased with mobile pricing.
+
+        .. versionadded:: 2.1
+
+    .. attribute:: premium_tier_3
+
+        The plan is purchased with Nitro Basic discounted pricing.
+
+        .. versionadded:: 2.1
+
+    .. attribute:: nitro_basic
+
+        Alias of :attr:`SubscriptionPlanPurchaseType.premium_tier_3`.
+
+        .. versionadded:: 2.1
+
+    .. attribute:: mobile_premium_tier_2
+
+        The plan is purchased with mobile Nitro pricing.
+
+        .. versionadded:: 2.1
+
+    .. attribute:: mobile_nitro
+
+        Alias of :attr:`SubscriptionPlanPurchaseType.mobile_premium_tier_2`.
+
+        .. versionadded:: 2.1
 
 .. class:: PaymentStatus
 

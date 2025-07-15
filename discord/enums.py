@@ -1312,6 +1312,7 @@ class SubscriptionDiscountType(Enum):
     entitlement = 2
     premium_legacy_upgrade_promotion = 3
     premium_trial = 4
+    default = 5
 
 
 class SubscriptionInterval(Enum):
@@ -1319,13 +1320,29 @@ class SubscriptionInterval(Enum):
     year = 2
     day = 3
 
+    @property
+    def duration(self) -> int:
+        _INTERVAL_TABLE = {
+            SubscriptionInterval.day: 1,
+            SubscriptionInterval.month: 30,
+            SubscriptionInterval.year: 365,
+        }
+        return _INTERVAL_TABLE[self]
+
 
 class SubscriptionPlanPurchaseType(Enum):
     default = 0
     gift = 1
     sale = 2
+    premium_tier_1 = 3
     nitro_classic = 3
+    premium_tier_2 = 4
     nitro = 4
+    mobile = 5
+    premium_tier_3 = 6
+    nitro_basic = 6
+    mobile_premium_tier_2 = 7
+    mobile_nitro = 7
 
 
 class PaymentStatus(Enum):
