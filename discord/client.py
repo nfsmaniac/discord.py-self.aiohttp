@@ -157,7 +157,7 @@ class RTCRegion(NamedTuple):
 
 class LocationInfo(NamedTuple):
     country_code: str
-    subdivision_code: str
+    subdivision_code: Optional[str]
 
 
 class Client:
@@ -3146,7 +3146,7 @@ class Client:
 
         Returns
         -------
-        Tuple[:class:`str`, :class:`str`]
+        Tuple[:class:`str`, Optional[:class:`str`]]
             The country code and subdivision code of the client.
             This is also accessible as a namedtuple with ``country_code`` and ``subdivision_code`` attributes.
         """
