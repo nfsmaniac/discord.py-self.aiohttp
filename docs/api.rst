@@ -7610,6 +7610,11 @@ Promotion
 .. autoclass:: DiscountOffer()
     :members:
 
+.. attributetable:: Discount
+
+.. autoclass:: Discount()
+    :members:
+
 Subscription
 ~~~~~~~~~~~~
 
