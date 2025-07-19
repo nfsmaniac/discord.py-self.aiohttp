@@ -1041,6 +1041,7 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
                 self._public_flags,
                 self._avatar_decoration_data,
                 self.global_name,
+                self._primary_guild,
             ) = modified
             # Signal to dispatch user_update
             return to_return, self
