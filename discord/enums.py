@@ -329,6 +329,16 @@ class MessageType(Enum):
     purchase_notification = 44
     poll_result = 46
 
+    def is_deletable(self) -> bool:
+        return self not in {
+            MessageType.recipient_add,
+            MessageType.recipient_remove,
+            MessageType.call,
+            MessageType.channel_name_change,
+            MessageType.channel_icon_change,
+            MessageType.thread_starter_message,
+        }
+
 
 class SpeakingState(Enum):
     none = 0

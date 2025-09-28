@@ -183,6 +183,8 @@ async def _purge_helper(
             count = 0
         if not check(message):
             continue
+        if not message.type.is_deletable():
+            continue
 
         count += 1
         ret.append(message)
