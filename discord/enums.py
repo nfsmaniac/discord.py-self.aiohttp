@@ -732,6 +732,7 @@ class UserFlags(Enum):
     collaborator = 1125899906842624
     restricted_collaborator = 2251799813685248
 
+
 class NameFont(Enum):
     default = 11
     bangers = 1
@@ -746,6 +747,7 @@ class NameFont(Enum):
     sinistre = 10
     zilla_slab = 12
 
+
 class NameEffect(Enum):
     solid = 1
     gradient = 2
@@ -753,6 +755,7 @@ class NameEffect(Enum):
     toon = 4
     pop = 5
     glow = 6
+
 
 class ActivityType(Enum):
     unknown = -1
@@ -1311,7 +1314,6 @@ class PaymentSourceType(Enum):
     eps = 15
     ideal = 16
     cash_app = 17
-    payment_request = 99
 
 
 class PaymentGateway(Enum):
