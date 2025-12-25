@@ -2735,22 +2735,19 @@ class HTTPClient:
     @overload
     def get_scheduled_events(
         self, guild_id: Snowflake, with_user_count: Literal[True]
-    ) -> Response[List[scheduled_event.GuildScheduledEventWithUserCount]]:
-        ...
+    ) -> Response[List[scheduled_event.GuildScheduledEventWithUserCount]]: ...
 
     @overload
     def get_scheduled_events(
         self, guild_id: Snowflake, with_user_count: Literal[False]
-    ) -> Response[List[scheduled_event.GuildScheduledEvent]]:
-        ...
+    ) -> Response[List[scheduled_event.GuildScheduledEvent]]: ...
 
     @overload
     def get_scheduled_events(
         self, guild_id: Snowflake, with_user_count: bool
     ) -> Union[
         Response[List[scheduled_event.GuildScheduledEventWithUserCount]], Response[List[scheduled_event.GuildScheduledEvent]]
-    ]:
-        ...
+    ]: ...
 
     def get_scheduled_events(self, guild_id: Snowflake, with_user_count: bool) -> Response[Any]:
         params = {'with_user_count': str(with_user_count).lower()}
@@ -2772,20 +2769,19 @@ class HTTPClient:
     @overload
     def get_scheduled_event(
         self, guild_id: Snowflake, guild_scheduled_event_id: Snowflake, with_user_count: Literal[True]
-    ) -> Response[scheduled_event.GuildScheduledEventWithUserCount]:
-        ...
+    ) -> Response[scheduled_event.GuildScheduledEventWithUserCount]: ...
 
     @overload
     def get_scheduled_event(
         self, guild_id: Snowflake, guild_scheduled_event_id: Snowflake, with_user_count: Literal[False]
-    ) -> Response[scheduled_event.GuildScheduledEvent]:
-        ...
+    ) -> Response[scheduled_event.GuildScheduledEvent]: ...
 
     @overload
     def get_scheduled_event(
         self, guild_id: Snowflake, guild_scheduled_event_id: Snowflake, with_user_count: bool
-    ) -> Union[Response[scheduled_event.GuildScheduledEventWithUserCount], Response[scheduled_event.GuildScheduledEvent]]:
-        ...
+    ) -> Union[
+        Response[scheduled_event.GuildScheduledEventWithUserCount], Response[scheduled_event.GuildScheduledEvent]
+    ]: ...
 
     def get_scheduled_event(
         self, guild_id: Snowflake, guild_scheduled_event_id: Snowflake, with_user_count: bool
@@ -2841,8 +2837,7 @@ class HTTPClient:
         with_member: Literal[True],
         before: Optional[Snowflake] = ...,
         after: Optional[Snowflake] = ...,
-    ) -> Response[scheduled_event.ScheduledEventUsersWithMember]:
-        ...
+    ) -> Response[scheduled_event.ScheduledEventUsersWithMember]: ...
 
     @overload
     def get_scheduled_event_users(
@@ -2853,8 +2848,7 @@ class HTTPClient:
         with_member: Literal[False],
         before: Optional[Snowflake] = ...,
         after: Optional[Snowflake] = ...,
-    ) -> Response[scheduled_event.ScheduledEventUsers]:
-        ...
+    ) -> Response[scheduled_event.ScheduledEventUsers]: ...
 
     @overload
     def get_scheduled_event_users(
@@ -2865,8 +2859,7 @@ class HTTPClient:
         with_member: bool,
         before: Optional[Snowflake] = ...,
         after: Optional[Snowflake] = ...,
-    ) -> Union[Response[scheduled_event.ScheduledEventUsersWithMember], Response[scheduled_event.ScheduledEventUsers]]:
-        ...
+    ) -> Union[Response[scheduled_event.ScheduledEventUsersWithMember], Response[scheduled_event.ScheduledEventUsers]]: ...
 
     def get_scheduled_event_users(
         self,
@@ -3235,7 +3228,6 @@ class HTTPClient:
         mode: Optional[onboarding.OnboardingMode] = None,
         reason: Optional[str],
     ) -> Response[onboarding.Onboarding]:
-
         payload = {}
 
         if prompts is not None:
@@ -4881,9 +4873,10 @@ class HTTPClient:
     def get_country_code(self) -> Response[subscriptions.CountryCode]:
         return self.request(Route('GET', '/users/@me/billing/country-code'))
 
-    def get_library_entries(
-        self, country_code: Optional[str] = None
-    ) -> Response[List[library.LibraryApplication]]:
+    def get_location_info(self) -> Response[subscriptions.LocationInfo]:
+        return self.request(Route('GET', '/users/@me/billing/location-info'))
+
+    def get_library_entries(self, country_code: Optional[str] = None) -> Response[List[library.LibraryApplication]]:
         params = {}
         if country_code is not None:
             params['country_code'] = country_code
@@ -5002,18 +4995,15 @@ class HTTPClient:
     @overload
     def get_experiments(
         self, with_guild_experiments: Literal[True] = ...
-    ) -> Response[experiment.ExperimentResponseWithGuild]:
-        ...
+    ) -> Response[experiment.ExperimentResponseWithGuild]: ...
 
     @overload
-    def get_experiments(self, with_guild_experiments: Literal[False] = ...) -> Response[experiment.ExperimentResponse]:
-        ...
+    def get_experiments(self, with_guild_experiments: Literal[False] = ...) -> Response[experiment.ExperimentResponse]: ...
 
     @overload
     def get_experiments(
         self, with_guild_experiments: bool = True
-    ) -> Response[Union[experiment.ExperimentResponse, experiment.ExperimentResponseWithGuild]]:
-        ...
+    ) -> Response[Union[experiment.ExperimentResponse, experiment.ExperimentResponseWithGuild]]: ...
 
     def get_experiments(
         self, with_guild_experiments: bool = True

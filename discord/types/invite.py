@@ -71,12 +71,10 @@ class PartialInvite(_InviteTargetType):
     is_nickname_changeable: NotRequired[bool]
 
 
-class InviteWithCounts(PartialInvite, _GuildCounts):
-    ...
+class InviteWithCounts(PartialInvite, _GuildCounts): ...
 
 
-class InviteWithMetadata(PartialInvite, _InviteMetadata):
-    ...
+class InviteWithMetadata(PartialInvite, _InviteMetadata): ...
 
 
 class AcceptedInvite(PartialInvite):
