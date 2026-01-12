@@ -953,11 +953,13 @@ class Presence:
 
     _OFFLINE: ClassVar[Self] = MISSING
 
-    def __init__(self, data: gw.BasePresenceUpdate, state: ConnectionState, /) -> None:
+    def __init__(self, data: gw.BasePresenceUpdate, state: ConnectionState, user_id: int, /) -> None:
         self.client_status: ClientStatus = ClientStatus(data['status'], data.get('client_status'))
-        self.activities: Tuple[ActivityTypes, ...] = tuple(create_activity(d, state) for d in data.get('activities', []))
+        self.activities: Tuple[ActivityTypes, ...] = tuple(
+            create_activity(d, state, user_id) for d in data.get('activities', [])
+        )
         self.hidden_activities: Tuple[ActivityTypes, ...] = tuple(
-            create_activity(d, state) for d in data.get('hidden_activities', [])
+            create_activity(d, state, user_id) for d in data.get('hidden_activities', [])
         )
 
     def __repr__(self) -> str:
@@ -979,9 +981,9 @@ class Presence:
             return True
         return self.client_status != other.client_status or self.activities != other.activities
 
-    def _update(self, data: gw.BasePresenceUpdate, state: ConnectionState, /) -> None:
+    def _update(self, data: gw.BasePresenceUpdate, state: ConnectionState, user_id: int, /) -> None:
         self.client_status._update(data['status'], data.get('client_status'))
-        self.activities = tuple(create_activity(d, state) for d in data['activities'])
+        self.activities = tuple(create_activity(d, state, user_id) for d in data['activities'])
 
     @classmethod
     def _offline(cls) -> Self:
@@ -1219,9 +1221,9 @@ class ConnectionState:
         return self.client.ws
 
     @property
-    def self_id(self) -> Optional[int]:
+    def self_id(self) -> int:
         u = self.user
-        return u.id if u else None
+        return u.id if u else None  # type: ignore
 
     @property
     def locale(self) -> str:
@@ -1744,7 +1746,7 @@ class ConnectionState:
         # Relationship presence parsing
         for presence in extra_data['merged_presences'].get('friends', []):
             user_id = int(presence.pop('user_id'))  # type: ignore
-            self.store_presence(user_id, self.create_presence(presence))
+            self.store_presence(user_id, self.create_presence(presence, user_id))
 
         # Private channel parsing
         for pm in data.get('private_channels', []) + extra_data.get('lazy_private_channels', []):
@@ -1992,10 +1994,10 @@ class ConnectionState:
         presence = self.get_presence(user_id, guild_id)
         if presence is not None:
             old_presence = Presence._copy(presence)
-            presence._update(data, self)
+            presence._update(data, self, user_id)
         else:
             old_presence = Presence._offline()
-            presence = self.store_presence(user_id, self.create_presence(data), guild_id)
+            presence = self.store_presence(user_id, self.create_presence(data, user_id), guild_id)
 
         if not guild:
             try:
@@ -2594,7 +2596,7 @@ class ConnectionState:
         member = Member(guild=guild, data=data, state=self)
         presence = None
         if 'presence' in data:
-            presence = self.create_presence(data['presence'])
+            presence = self.create_presence(data['presence'], member._user.id)
 
         if self.member_cache_flags.joined or member.id == self.self_id:
             if presence is not None:
@@ -3689,8 +3691,8 @@ class ConnectionState:
     def client_presence(self) -> FakeClientPresence:
         return FakeClientPresence(self)
 
-    def create_presence(self, data: gw.BasePresenceUpdate) -> Presence:
-        return Presence(data, self)
+    def create_presence(self, data: gw.BasePresenceUpdate, user_id: int) -> Presence:
+        return Presence(data, self, user_id)
 
     def create_offline_presence(self) -> Presence:
         return Presence._offline()
