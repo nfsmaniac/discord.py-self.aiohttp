@@ -567,6 +567,8 @@ class DiscordWebSocket:
             try:
                 func(data)
             except Exception as exc:
+                if event in ('READY', 'READY_SUPPLEMENTAL'):
+                    raise
                 _log.warning(
                     'Parsing event %s encountered an exception. Please open an issue with this traceback:',
                     event,
