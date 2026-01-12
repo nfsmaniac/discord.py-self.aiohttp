@@ -102,7 +102,6 @@ class BaseUser(_UserTag):
         'bot',
         'system',
         '_public_flags',
-        'premium_type',
         '_state',
     )
 
@@ -661,6 +660,7 @@ class ClientUser(BaseUser):
         '_flags',
         'verified',
         'mfa_enabled',
+        'premium_type',
         'email',
         'phone',
         'bio',
@@ -991,14 +991,6 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
         Specifies if the user is a bot account.
     system: :class:`bool`
         Specifies if the user is a system user (i.e. represents Discord officially).
-    premium_type: Optional[:class:`PremiumType`]
-        Specifies the type of premium a user has (i.e. Nitro, Nitro Classic, or Nitro Basic).
-
-        .. note::
-
-            This information is only available in certain contexts.
-
-        .. versionadded:: 2.1
     """
 
     __slots__ = ('__weakref__',)
