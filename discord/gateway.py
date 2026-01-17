@@ -41,7 +41,7 @@ from . import utils
 from .activity import BaseActivity, Spotify
 from .enums import SpeakingState
 from .enums import SpeakingState, Status
-from .errors import ConnectionClosed
+from .errors import ClientException, ConnectionClosed
 from .flags import Capabilities
 
 try:
@@ -660,23 +660,23 @@ class DiscordWebSocket:
                 _log.debug('Websocket closed with %s, cannot reconnect.', code)
                 raise ConnectionClosed(self.socket, code=code) from None
 
-    async def debug_send(self, data: str, /) -> None:
+    async def debug_send(self, data: str, /, *, raise_on_closed: bool = False) -> None:
         await self._rate_limiter.block()
         self._dispatch('socket_raw_send', data)
         await self.socket.send_str(data)
 
-    async def send(self, data: str, /) -> None:
+    async def send(self, data: str, /, *, raise_on_closed: bool = False) -> None:
         await self._rate_limiter.block()
         await self.socket.send_str(data)
 
-    async def send_as_json(self, data: Any) -> None:
+    async def send_as_json(self, data: Any, /, *, raise_on_closed: bool = False) -> None:
         try:
-            await self.send(utils._to_json(data))
+            await self.send(utils._to_json(data), raise_on_closed=raise_on_closed)
         except RuntimeError as exc:
             if not self._can_handle_close():
                 raise ConnectionClosed(self.socket) from exc
 
-    async def send_heartbeat(self, data: Any) -> None:
+    async def send_heartbeat(self, data: Any, /) -> None:
         # This bypasses the rate limit handling code since it has a higher priority
         try:
             await self.socket.send_str(utils._to_json(data))
@@ -748,7 +748,7 @@ class DiscordWebSocket:
         }
 
         _log.debug('Subscribing to guilds with payload %s', payload['d'])
-        await self.send_as_json(payload)
+        await self.send_as_json(payload, raise_on_closed=True)
 
     async def request_chunks(
         self,
@@ -884,7 +884,6 @@ class DiscordVoiceWebSocket:
         self._keep_alive: Optional[VoiceKeepAliveHandler] = None
         self._close_code: Optional[int] = None
         self.secret_key: Optional[List[int]] = None
-        self.seq_ack: int = -1
         self.voice_version: Optional[str] = None
         self.rtc_worker_version: Optional[str] = None
         if hook:
@@ -936,7 +935,6 @@ class DiscordVoiceWebSocket:
         *,
         resume: bool = False,
         hook: Optional[Callable[..., Coroutine[Any, Any, Any]]] = None,
-        seq_ack: int = -1,
     ) -> Self:
         """Creates a voice websocket for the :class:`VoiceClient`."""
         gateway = f'wss://{state.endpoint}/?v=4'
@@ -1066,9 +1064,8 @@ class DiscordVoiceWebSocket:
         await self._hook(self, msg)
 
     async def received_binary_message(self, msg: bytes) -> None:
-        self.seq_ack = struct.unpack_from('>H', msg, 0)[0]
         op = msg[2]
-        _log.debug('Voice socket binary frame: %d bytes, seq=%s, op=%s.', len(msg), self.seq_ack, op)
+        _log.debug('Voice socket binary frame: %d bytes, op=%s.', len(msg), op)
         state = self._connection
 
         if state.dave_session is None:
@@ -1201,7 +1198,7 @@ class DiscordVoiceWebSocket:
             _log.debug('Voice received %s.', msg)
             raise ConnectionClosed(self.ws, code=self._close_code)
 
-    async def close(self, code: int = 1000, reason: bytes = b'') -> None:
+    async def close(self, code: int = 1000) -> None:
         if self._keep_alive is not None:
             self._keep_alive.stop()
 
