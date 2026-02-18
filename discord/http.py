@@ -75,13 +75,13 @@ from .utils import MISSING
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .channel import TextChannel, DMChannel, GroupChannel, PartialMessageable, VoiceChannel, ForumChannel
-    from .threads import Thread
+    from .channel import DMChannel, ForumChannel, GroupChannel, PartialMessageable, TextChannel, VoiceChannel
+    from .client import Client
+    from .embeds import Embed
+    from .enums import ChannelType, InteractionType
+    from .flags import MessageFlags
     from .mentions import AllowedMentions
     from .message import Attachment, Message
-    from .flags import MessageFlags
-    from .enums import ChannelType, InteractionType
-    from .embeds import Embed
     from .threads import Thread
     from .poll import Poll
 
@@ -600,19 +600,26 @@ class HTTPClient:
         self,
         connector: Optional[aiohttp.BaseConnector] = None,
         *,
+        loop: asyncio.AbstractEventLoop,
+        client: Optional[Client] = None,
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         unsync_clock: bool = True,
         http_trace: Optional[aiohttp.TraceConfig] = None,
         captcha: Optional[Callable[[CaptchaRequired], Coroutine[Any, Any, str]]] = None,
         max_ratelimit_timeout: Optional[float] = None,
-        locale: Callable[[], str] = lambda: 'en-US',
+        default_ratelimit_limit: int = 1,
+        extra_headers: Optional[Mapping[str, str]] = None,
         debug_options: Optional[Sequence[str]] = None,
         rpc_proxy: Optional[str] = None,
         proxy_gateway: bool = True,
+        timezone: Optional[str] = None,
     ) -> None:
         self.connector: aiohttp.BaseConnector = connector or MISSING
-        self.__session: aiohttp.ClientSession = MISSING
+        self.loop: asyncio.AbstractEventLoop = loop
+        self.client: Optional[Client] = client
+        self.__asession: aiohttp.ClientSession = MISSING
+        self.__session: requests.AsyncSession[requests.Response] = MISSING
         # Route key -> Bucket hash
         self._bucket_hashes: Dict[str, str] = {}
         # Bucket Hash + Major Parameters -> Rate limit
@@ -632,10 +639,12 @@ class HTTPClient:
         self.use_clock: bool = not unsync_clock
         self.captcha_handler: Optional[Callable[[CaptchaRequired], Coroutine[Any, Any, str]]] = captcha
         self.max_ratelimit_timeout: Optional[float] = max(30.0, max_ratelimit_timeout) if max_ratelimit_timeout else None
-        self.get_locale: Callable[[], str] = locale
+        self.default_ratelimit_limit: int = default_ratelimit_limit
+        self.extra_headers: Mapping[str, str] = extra_headers or {}
         self.debug_options: Optional[Sequence[str]] = debug_options
         self.rpc_proxy: Optional[str] = rpc_proxy
         self.proxy_gateway: bool = proxy_gateway
+        self.timezone: Optional[str] = timezone
 
         self.tracer = None
         if debug_options and 'trace' in debug_options:
@@ -773,21 +782,26 @@ class HTTPClient:
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
             'User-Agent': self.user_agent,
-            'X-Discord-Locale': self.get_locale(),
+            'X-Discord-Locale': self.client._connection.locale if self.client else 'en-US',
             'X-Super-Properties': self.encoded_super_properties,
         }
 
-        # This header isn't really necessary
-        # Timezones are annoying, so if it errors, we don't care
-        try:
-            from tzlocal import get_localzone_name
+        if self.client and self.client._connection.installation_id is not None:
+            headers['X-Installation-ID'] = self.client._connection.installation_id
 
-            timezone = get_localzone_name()
-        except Exception:
-            pass
+        if self.timezone is not None:
+            headers['X-Discord-Timezone'] = self.timezone
         else:
-            if timezone:
-                headers['X-Discord-Timezone'] = timezone
+            # Timezones are annoying, so if it errors, we don't care
+            try:
+                from tzlocal import get_localzone_name
+
+                timezone = get_localzone_name()
+            except Exception:
+                pass
+            else:
+                if timezone:
+                    headers['X-Discord-Timezone'] = timezone
 
         if self.debug_options:
             headers['X-Debug-Options'] = ','.join(self.debug_options)
@@ -795,7 +809,7 @@ class HTTPClient:
         if self.rpc_proxy:
             headers['X-RPC-Proxy'] = self.rpc_proxy
 
-        if self.token is not None and kwargs.get('auth', True):
+        if self.token is not None and kwargs.pop('auth', True):
             headers['Authorization'] = self.token
 
         reason = kwargs.pop('reason', None)
@@ -5046,22 +5060,25 @@ class HTTPClient:
 
     @overload
     def get_experiments(
-        self, with_guild_experiments: Literal[True] = ...
+        self, *, with_guild_experiments: Literal[True] = ..., platform: Optional[str] = ...
     ) -> Response[experiment.ExperimentResponseWithGuild]: ...
 
     @overload
-    def get_experiments(self, with_guild_experiments: Literal[False] = ...) -> Response[experiment.ExperimentResponse]: ...
-
-    @overload
     def get_experiments(
-        self, with_guild_experiments: bool = True
-    ) -> Response[Union[experiment.ExperimentResponse, experiment.ExperimentResponseWithGuild]]: ...
+        self, *, with_guild_experiments: Literal[False] = ..., platform: Optional[str] = ...
+    ) -> Response[experiment.ExperimentResponse]: ...
 
     def get_experiments(
-        self, with_guild_experiments: bool = True
+        self, *, with_guild_experiments: bool = True, platform: Optional[str] = None
     ) -> Response[Union[experiment.ExperimentResponse, experiment.ExperimentResponseWithGuild]]:
         params = {'with_guild_experiments': str(with_guild_experiments).lower()}
+        if platform is not None:
+            params['platform'] = platform
         return self.request(Route('GET', '/experiments'), params=params, context_properties=ContextProperties.empty())
+
+    def get_apex_experiments(self, surface: int) -> Response[experiment.ApexExperimentResponse]:
+        params = {'surface': surface}
+        return self.request(Route('GET', '/apex/experiments'), params=params)
 
     # Hubs
 

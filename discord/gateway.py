@@ -457,6 +457,12 @@ class DiscordWebSocket:
         #     presence['status'] = self._connection._status or 'unknown'
         #     presence['activities'] = self._connection._activities
 
+        properties = self._headers.gateway_properties
+        installation_id = self._connection.installation_id
+        if installation_id is not None:
+            # Currently, our installation ID is only persisted per login()
+            properties['installation_id'] = installation_id
+
         # TODO: Implement client state
         payload = {
             'op': self.IDENTIFY,
