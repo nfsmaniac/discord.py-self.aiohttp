@@ -760,6 +760,7 @@ class ClientUser(BaseUser):
         bio: Optional[str] = MISSING,
         date_of_birth: datetime = MISSING,
         pomelo: bool = MISSING,
+        primary_guild: Optional[discord.abc.Snowflake] = MISSING,
     ) -> ClientUser:
         """|coro|
 
@@ -837,6 +838,18 @@ class ClientUser(BaseUser):
             The new global display name you wish to change to.
 
             .. versionadded:: 2.1
+        primary_guild: Optional[:class:`discord.abc.Snowflake`]
+            A :class:`discord.abc.Snowflake` object representing the primary guild to set on your profile.
+
+            The behaviour of this parameters is as follows:
+
+            - If a :class:`PrimaryGuild` object is passed, then the guild ID and whether the identity is 
+                enabled are taken from that object.
+            - If a :class:`discord.abc.Snowflake` object is passed, then the guild ID is taken from that 
+                object and the identity is enabled.
+            - If ``None`` is passed, then the primary guild is removed.
+
+            .. versionadded:: 2.2
 
         Raises
         ------
@@ -850,6 +863,7 @@ class ClientUser(BaseUser):
             `house` field was not a :class:`HypeSquadHouse`.
             `date_of_birth` field was not a :class:`datetime.datetime`.
             `accent_colo(u)r` parameter was not a :class:`Colour`.
+            `primary_guild` parameter was not a :class:`discord.abc.Snowflake`.
 
         Returns
         ---------
@@ -939,6 +953,17 @@ class ClientUser(BaseUser):
                 raise ValueError('`house` parameter was not a HypeSquadHouse')
             else:
                 await http.change_hypesquad_house(house.value)
+
+        if primary_guild is not MISSING:
+            if not isinstance(primary_guild, discord.abc.Snowflake):
+                raise ValueError('`primary_guild` parameter was not a Snowflake')
+            
+            primary_guild_id = primary_guild.id
+            primary_guild_enabled = True
+            if isinstance(primary_guild, PrimaryGuild):
+                primary_guild_enabled = primary_guild.identity_enabled
+
+            data = await http.set_guild_identity(guild_id=primary_guild_id, enabled=primary_guild_enabled)
 
         if args or data is None:
             data = await http.edit_profile(args)
