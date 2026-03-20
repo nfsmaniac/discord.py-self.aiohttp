@@ -652,6 +652,13 @@ class HTTPClient:
 
         self.super_properties: Dict[str, Any] = {}
         self.encoded_super_properties: str = MISSING
+        self._headers: utils.Headers = utils.Headers(
+            platform='Windows',
+            major_version=136,
+            super_properties={},
+            encoded_super_properties='',
+            extra_gateway_properties={},
+        )
         self._started: bool = False
 
     def __del__(self) -> None:
@@ -686,6 +693,11 @@ class HTTPClient:
 
         self.super_properties, self.encoded_super_properties = sp, _ = await utils._get_info(session, proxy, proxy_auth)
         _log.info('Found user agent %s, build number %s.', sp.get('browser_user_agent'), sp.get('client_build_number'))
+
+        # Initialize headers with actual values
+        self._headers.super_properties = self.super_properties
+        self._headers.encoded_super_properties = self.encoded_super_properties
+        self._headers.major_version = int(sp.get('browser_version', '136').split('.')[0])
 
         self._started = True
 
