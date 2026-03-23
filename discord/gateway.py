@@ -638,7 +638,15 @@ class DiscordWebSocket:
             self.session_id = data['session_id']
             self.gateway = yarl.URL(data['resume_gateway_url'])
 
-            _log.info('Connected to Gateway (Session ID: %s).', self.session_id)
+            _log.info('Connected to Gateway (session ID: %s).', self.session_id)
+
+            # At READY, we need to send an UPDATE_TIME_SPENT_SESSION_ID immediately
+            # This is always followed by a heartbeat
+            if self._keep_alive:
+                await self.send_heartbeat(self._keep_alive.get_time_spent_payload())
+                await self.send_heartbeat(self._keep_alive.get_heartbeat_payload())
+                self._keep_alive._last_time_spent = time.perf_counter()
+
             await self.voice_state()  # Initial OP 4
 
         elif event == 'RESUMED':
