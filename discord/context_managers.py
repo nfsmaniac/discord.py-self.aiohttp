@@ -86,13 +86,22 @@ class Typing:
 
         while True:
             await asyncio.sleep(5)
-            data = await typing(channel.id)
+            try:
+                data = await typing(channel.id)
+            except Exception:
+                # Typing is a non-critical operation, silently ignore errors
+                # such as rate limiting or network failures
+                continue
             if data:
                 self._update(data)
 
     async def __aenter__(self) -> None:
         channel = await self._get_channel()
-        await channel._state.http.send_typing(channel.id)
+        try:
+            await channel._state.http.send_typing(channel.id)
+        except Exception:
+            # Typing is a non-critical operation, silently ignore errors
+            pass
         self.task: asyncio.Task[None] = self.loop.create_task(self.do_typing())
         self.task.add_done_callback(_typing_done_callback)
 
