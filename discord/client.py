@@ -113,6 +113,7 @@ from .settings import UserSettings, LegacyUserSettings, TrackingSettings, EmailS
 from .affinity import *
 from .oauth2 import OAuth2Authorization, OAuth2Token
 from .experiment import ApexExperiment, UserExperiment, GuildExperiment
+from .tracking import HeadersContext
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -218,6 +219,10 @@ class Client:
             .. versionadded:: 2.0
 
     A number of options can be passed to the :class:`Client`.
+
+    .. versionchanged:: 2.1
+
+        Removed the ``http_trace`` parameter.
 
     Parameters
     -----------
@@ -984,6 +989,39 @@ class Client:
             raise exception
         return await handler(exception, self)
 
+    async def headers_context(self) -> HeadersContext:
+        """|coro|
+
+        Returns the headers context for the client.
+        Users may override this to change what platform the client identifies itself as, amongst other things.
+
+        This is only called once, before any requests are made.
+        Returns an instance of :meth:`.HeadersContext.default` by default.
+
+        .. versionadded:: 2.2
+
+        .. warning::
+
+            Configuring your own header context from scratch is not recommended,
+            as it may lead to account termination by anti abuse systems.
+
+        Example: ::
+
+            class MyClient(discord.Client):
+                async def headers_context(self):
+                    async with aiohttp.ClientSession() as session:
+                        # We want the desktop client context
+                        return await discord.HeadersContext.desktop(session)
+
+        Returns
+        --------
+        :class:`.HeadersContext`
+            The headers context for the client.
+        """
+        http = self.http
+        session = http._HTTPClient__session  # type: ignore
+        return await HeadersContext.default(session, http.proxy, http.proxy_auth)
+
     async def _async_setup_hook(self) -> None:
         # Called whenever the client needs to initialise asyncio objects with a running loop
         loop = asyncio.get_running_loop()
@@ -1063,7 +1101,7 @@ class Client:
     async def connect(self, *, reconnect: bool = True) -> None:
         """|coro|
 
-        Creates a websocket connection and lets the websocket listen
+        Creates a WebSocket connection and lets the WebSocket listen
         to messages from Discord. This is a loop that runs the entire
         event system and miscellaneous aspects of the library. Control
         is not resumed until the WebSocket connection is terminated.

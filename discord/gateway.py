@@ -43,6 +43,7 @@ from .enums import SpeakingState
 from .enums import SpeakingState, Status
 from .errors import ClientException, ConnectionClosed
 from .flags import Capabilities
+from .tracking import HeadersContext
 
 try:
     import davey  # type: ignore
@@ -66,6 +67,7 @@ if TYPE_CHECKING:
     from .client import Client
     from .enums import Status
     from .state import ConnectionState
+    from .tracking import HeadersContext
     from .types.activity import Activity as ActivityPayload
     from .types.snowflake import Snowflake
     from .types.gateway import BulkGuildSubscribePayload
@@ -311,6 +313,7 @@ class DiscordWebSocket:
         _max_heartbeat_timeout: float
         _user_agent: str
         _super_properties: Dict[str, Any]
+        _headers: HeadersContext
         _transport_compression: bool
 
     # fmt: off
@@ -364,9 +367,10 @@ class DiscordWebSocket:
         self._has_sent_presence: bool = False
 
         # Headers for gateway properties and QoS heartbeat
-        self._headers: utils.Headers = utils.Headers(
+        self._headers: HeadersContext = HeadersContext(
             platform='Windows',
-            major_version=136,
+            browser_type='chrome',
+            browser_major_version=136,
             super_properties={},
             encoded_super_properties='',
             extra_gateway_properties={},
@@ -438,7 +442,6 @@ class DiscordWebSocket:
         ws._transport_compression = compress
         ws.afk = client._connection._afk
         ws.idle_since = client._connection._idle_since
-        ws._headers = client.http._headers
 
         if old_ws is not None:
             # Copy over the presence state from the old websocket
@@ -529,7 +532,7 @@ class DiscordWebSocket:
             'd': {
                 'token': self.token,
                 'capabilities': self.capabilities.value,
-                'properties': self._super_properties,
+                'properties': properties,
                 'presence': presence,
                 'compress': not self._transport_compression,  # We require at least one form of compression
                 'client_state': {

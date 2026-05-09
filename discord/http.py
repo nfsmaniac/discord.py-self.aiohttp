@@ -55,24 +55,26 @@ import datetime
 
 import aiohttp
 
-from .enums import NetworkConnectionType, RelationshipAction, InviteType
-from .errors import (
-    HTTPException,
-    RateLimited,
-    Forbidden,
-    NotFound,
-    LoginFailure,
-    DiscordServerError,
-    GatewayNotFound,
-    CaptchaRequired,
-)
-from .file import _FileBase, File
-from .tracking import ContextProperties
 from . import utils
+from .enums import InviteType, NetworkConnectionType, RelationshipAction
+from .errors import (
+    CaptchaRequired,
+    DiscordServerError,
+    Forbidden,
+    GatewayNotFound,
+    HTTPException,
+    LoginFailure,
+    NotFound,
+    RateLimited,
+)
+from .file import File, _FileBase
 from .mentions import AllowedMentions
+from .tracking import ContextProperties, HeadersContext
 from .utils import MISSING
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from typing_extensions import Self
 
     from .channel import DMChannel, ForumChannel, GroupChannel, PartialMessageable, TextChannel, VoiceChannel
@@ -91,8 +93,8 @@ if TYPE_CHECKING:
         audit_log,
         automod,
         billing,
-        command,
         channel,
+        command,
         directory,
         emoji,
         entitlements,
@@ -111,23 +113,21 @@ if TYPE_CHECKING:
         profile,
         promotions,
         read_state,
-        template,
         role,
-        user,
-        webhook,
-        widget,
-        team,
-        threads,
         scheduled_event,
+        sticker,
         store,
         subscriptions,
-        sticker,
+        team,
+        template,
+        threads,
+        user,
+        webhook,
         welcome_screen,
+        widget,
         poll,
     )
     from .types.snowflake import Snowflake, SnowflakeList
-
-    from types import TracebackType
 
     T = TypeVar('T')
     BE = TypeVar('BE', bound=BaseException)
@@ -154,11 +154,21 @@ CIPHERS = (
     'AES256-SHA',
 )
 
+_CLOUDFLARE_REGEX = re.compile(r'<span>(\d{3,4})</span>')
 _log = logging.getLogger(__name__)
 
 
-async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any], str]:
-    text = await response.text(encoding='utf-8')
+# For some reason, the Discord voice websocket expects this header to be
+# completely lowercase while aiohttp respects spec and does it as case-insensitive
+aiohttp.hdrs.WEBSOCKET = 'websocket'  # type: ignore
+
+
+async def json_or_text(response: Union[aiohttp.ClientResponse, requests.Response]) -> Union[Dict[str, Any], str]:
+    if isinstance(response, aiohttp.ClientResponse):
+        text = await response.text(encoding='utf-8')
+    else:
+        text = await response.atext()
+
     try:
         if response.headers['content-type'] == 'application/json':
             return utils._from_json(text)
@@ -434,19 +444,21 @@ class Ratelimit:
         'dirty',
         '_last_request',
         '_max_ratelimit_timeout',
+        '_default_ratelimit_limit',
         '_loop',
         '_pending_requests',
         '_sleeping',
     )
 
-    def __init__(self, max_ratelimit_timeout: Optional[float]) -> None:
-        self.limit: int = 1
+    def __init__(self, max_ratelimit_timeout: Optional[float], default_ratelimit_limit: int) -> None:
+        self.limit: int = default_ratelimit_limit
         self.remaining: int = self.limit
         self.outgoing: int = 0
         self.reset_after: float = 0.0
         self.expires: Optional[float] = None
         self.dirty: bool = False
         self._max_ratelimit_timeout: Optional[float] = max_ratelimit_timeout
+        self._default_ratelimit_limit: int = default_ratelimit_limit
         self._loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
         self._pending_requests: deque[asyncio.Future[Any]] = deque()
         # Only a single rate limit object should be sleeping at a time.
@@ -468,7 +480,7 @@ class Ratelimit:
 
     def update(self, response: aiohttp.ClientResponse, *, use_clock: bool = False) -> None:
         headers = response.headers
-        self.limit = int(headers.get('X-Ratelimit-Limit', 1))
+        self.limit = int(headers.get('X-Ratelimit-Limit', self._default_ratelimit_limit))
 
         if self.dirty:
             self.remaining = min(int(headers.get('X-Ratelimit-Remaining', 0)), self.limit - self.outgoing)
@@ -480,7 +492,7 @@ class Ratelimit:
         if use_clock or not reset_after:
             utc = datetime.timezone.utc
             now = datetime.datetime.now(utc)
-            reset = datetime.datetime.fromtimestamp(float(headers['X-Ratelimit-Reset']), utc)
+            reset = datetime.datetime.fromtimestamp(float(headers['X-Ratelimit-Reset']), utc)  # type: ignore
             self.reset_after = (reset - now).total_seconds()
         else:
             self.reset_after = float(reset_after)
@@ -602,6 +614,7 @@ class HTTPClient:
         *,
         loop: asyncio.AbstractEventLoop,
         client: Optional[Client] = None,
+        headers_context: HeadersContext = MISSING,
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         unsync_clock: bool = True,
@@ -612,9 +625,13 @@ class HTTPClient:
         extra_headers: Optional[Mapping[str, str]] = None,
         debug_options: Optional[Sequence[str]] = None,
         rpc_proxy: Optional[str] = None,
+        interface: Optional[str] = None,
         proxy_gateway: bool = True,
         timezone: Optional[str] = None,
     ) -> None:
+        if client is None and headers_context is MISSING:
+            raise ValueError('headers_context must be provided if client is not provided')
+
         self.connector: aiohttp.BaseConnector = connector or MISSING
         self.loop: asyncio.AbstractEventLoop = loop
         self.client: Optional[Client] = client
@@ -643,6 +660,7 @@ class HTTPClient:
         self.extra_headers: Mapping[str, str] = extra_headers or {}
         self.debug_options: Optional[Sequence[str]] = debug_options
         self.rpc_proxy: Optional[str] = rpc_proxy
+        self.interface: Optional[str] = interface
         self.proxy_gateway: bool = proxy_gateway
         self.timezone: Optional[str] = timezone
 
@@ -650,15 +668,9 @@ class HTTPClient:
         if debug_options and 'trace' in debug_options:
             self.tracer = utils.IDGenerator()
 
+        self.headers: HeadersContext = headers_context
         self.super_properties: Dict[str, Any] = {}
         self.encoded_super_properties: str = MISSING
-        self._headers: utils.Headers = utils.Headers(
-            platform='Windows',
-            major_version=136,
-            super_properties={},
-            encoded_super_properties='',
-            extra_gateway_properties={},
-        )
         self._started: bool = False
 
     def __del__(self) -> None:
@@ -688,17 +700,18 @@ class HTTPClient:
             )
         )
 
-        proxy = self.proxy
-        proxy_auth = self.proxy_auth
+        if self.client is not None:
+            self.headers = await self.client.headers_context()
+        headers = self.headers
 
-        self.super_properties, self.encoded_super_properties = sp, _ = await utils._get_info(session, proxy, proxy_auth)
-        _log.info('Found user agent %s, build number %s.', sp.get('browser_user_agent'), sp.get('client_build_number'))
+        _log.info(
+            'Found user agent "%s", build number %s.',
+            headers.user_agent,
+            headers.super_properties.get('client_build_number'),
+        )
 
-        # Initialize headers with actual values
-        self._headers.super_properties = self.super_properties
-        self._headers.encoded_super_properties = self.encoded_super_properties
-        self._headers.major_version = int(sp.get('browser_version', '136').split('.')[0])
-
+        self.super_properties = headers.super_properties
+        self.encoded_super_properties = headers.encoded_super_properties
         self._started = True
 
     async def ws_connect(self, url: str, *, compress: int = 0) -> aiohttp.ClientWebSocketResponse:
@@ -710,7 +723,7 @@ class HTTPClient:
                 'Accept-Language': 'en-US',
                 'Cache-Control': 'no-cache',
                 'Connection': 'Upgrade',
-                'Origin': 'https://discord.com',
+                'Origin': f'https://{self.headers.BASE_DOMAIN}',
                 'Pragma': 'no-cache',
                 'Sec-WebSocket-Extensions': 'permessage-deflate; client_max_window_bits',
                 'User-Agent': self.user_agent,
@@ -718,22 +731,25 @@ class HTTPClient:
             'compress': compress,
         }
 
-        # Proxy gateway client param - only use proxy for gateway if proxy_gateway is True
-        if self.proxy_gateway:
-            if self.proxy is not None:
-                kwargs['proxy'] = self.proxy
-            if self.proxy_auth is not None:
-                kwargs['proxy_auth'] = self.proxy_auth
+        proxy = kwargs.pop('proxy', self.proxy if self.proxy_gateway else None)
+        proxy_auth = kwargs.pop('proxy_auth', self.proxy_auth if self.proxy_gateway else None)
+        interface = kwargs.pop('interface', self.interface if self.proxy_gateway else None)
+        if proxy is not None:
+            kwargs['proxies'] = {'all': proxy}
+        if proxy_auth is not None:
+            if isinstance(proxy_auth, aiohttp.BasicAuth):
+                proxy_auth = (proxy_auth.login, proxy_auth.password)
+            kwargs['proxy_auth'] = proxy_auth
 
         return await self.__session.ws_connect(url, **kwargs)
 
     @property
-    def browser_version(self) -> str:
-        return self.super_properties['browser_version']
+    def browser_version(self) -> int:
+        return self.headers.browser_major_version
 
     @property
     def user_agent(self) -> str:
-        return self.super_properties['browser_user_agent']
+        return self.headers.user_agent
 
     def _try_clear_expired_ratelimits(self) -> None:
         if len(self._buckets) < 256:
@@ -747,7 +763,7 @@ class HTTPClient:
         try:
             value = self._buckets[key]
         except KeyError:
-            self._buckets[key] = value = Ratelimit(self.max_ratelimit_timeout)
+            self._buckets[key] = value = Ratelimit(self.max_ratelimit_timeout, self.default_ratelimit_limit)
             self._try_clear_expired_ratelimits()
         return value
 
@@ -782,20 +798,20 @@ class HTTPClient:
             'Accept-Language': 'en-US',
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
-            'Origin': 'https://discord.com',
+            'Origin': f'https://{self.headers.BASE_DOMAIN}',
             'Pragma': 'no-cache',
-            'Referer': 'https://discord.com/channels/@me',
+            'Referer': f'https://{self.headers.BASE_DOMAIN}/channels/@me',
             'Sec-CH-UA': '"Google Chrome";v="{0}", "Chromium";v="{0}", ";Not-A.Brand";v="24"'.format(
-                self.browser_version.split('.')[0]
+                self.browser_version
             ),
             'Sec-CH-UA-Mobile': '?0',
             'Sec-CH-UA-Platform': '"Windows"',
             'Sec-Fetch-Dest': 'empty',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': self.user_agent,
+            'User-Agent': self.headers.user_agent,
             'X-Discord-Locale': self.client._connection.locale if self.client else 'en-US',
-            'X-Super-Properties': self.encoded_super_properties,
+            'X-Super-Properties': self.headers.encoded_super_properties,
         }
 
         if self.client and self.client._connection.installation_id is not None:
@@ -838,13 +854,22 @@ class HTTPClient:
             if isinstance(props, ContextProperties):
                 headers['X-Context-Properties'] = props.value
 
+        extra_headers = kwargs.pop('headers', None)
+        if extra_headers:
+            headers.update(extra_headers)
+        headers.update(self.extra_headers)
         kwargs['headers'] = headers
 
         # Proxy support
-        if self.proxy is not None:
-            kwargs['proxy'] = self.proxy
-        if self.proxy_auth is not None:
-            kwargs['proxy_auth'] = self.proxy_auth
+        proxy = kwargs.pop('proxy', self.proxy)
+        proxy_auth = kwargs.pop('proxy_auth', self.proxy_auth)
+        if proxy is not None:
+            kwargs['proxies'] = {'all': proxy}
+        if proxy_auth is not None:
+            if isinstance(proxy_auth, aiohttp.BasicAuth):
+                proxy_auth = (proxy_auth.login, proxy_auth.password)
+            kwargs['proxy_auth'] = proxy_auth
+        interface = kwargs.pop('interface', self.interface)
 
         if not self._global_over.is_set():
             await self._global_over.wait()
@@ -954,7 +979,7 @@ class HTTPClient:
                                 retry_after = float(response.headers.get('Retry-After', '0'))
                                 if not retry_after:
                                     # Unhandleable
-                                    result = re.search(r'<span>(\d{3,4})</span>', data)
+                                    result = _CLOUDFLARE_REGEX.search(data)
                                     code = int(result.group(1)) if result else 'Unknown'
                                     raise HTTPException(response, f'Cloudflare ban (code: {code})')
                             else:
@@ -1114,7 +1139,7 @@ class HTTPClient:
                         return data
 
                     # Unconditional retry
-                    if response.status in {500, 502, 504}:
+                    if response.status in {500, 502, 504, 507, 522, 523, 524}:
                         await asyncio.sleep(1 + tries * 2)
                         continue
 
@@ -1348,16 +1373,22 @@ class HTTPClient:
         )
         self.ack_token = data.get('token') if data else None
 
-    def ack_guild_feature(
+    async def ack_guild_feature(
         self, guild_id: Snowflake, type: int, entity_id: Snowflake
-    ) -> Response[read_state.AcknowledgementToken]:
-        return self.request(
+    ) -> read_state.AcknowledgementToken:
+        data: read_state.AcknowledgementToken = await self.request(
             Route('POST', '/guilds/{guild_id}/ack/{type}/{entity_id}', guild_id=guild_id, type=type, entity_id=entity_id),
             json={},
         )
+        self.ack_token = data.get('token') if data else None
+        return data
 
-    def ack_user_feature(self, type: int, entity_id: Snowflake) -> Response[read_state.AcknowledgementToken]:
-        return self.request(Route('POST', '/users/@me/{type}/{entity_id}/ack', type=type, entity_id=entity_id), json={})
+    async def ack_user_feature(self, type: int, entity_id: Snowflake) -> read_state.AcknowledgementToken:
+        data: read_state.AcknowledgementToken = await self.request(
+            Route('POST', '/users/@me/{type}/{entity_id}/ack', type=type, entity_id=entity_id), json={}
+        )
+        self.ack_token = data.get('token') if data else None
+        return data
 
     def ack_bulk(self, read_states: List[read_state.BulkReadState]) -> Response[None]:
         payload = {'read_states': read_states}
