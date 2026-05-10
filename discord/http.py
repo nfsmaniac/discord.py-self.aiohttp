@@ -801,9 +801,7 @@ class HTTPClient:
             'Origin': f'https://{self.headers.BASE_DOMAIN}',
             'Pragma': 'no-cache',
             'Referer': f'https://{self.headers.BASE_DOMAIN}/channels/@me',
-            'Sec-CH-UA': '"Google Chrome";v="{0}", "Chromium";v="{0}", ";Not-A.Brand";v="24"'.format(
-                self.browser_version
-            ),
+            'Sec-CH-UA': '"Google Chrome";v="{0}", "Chromium";v="{0}", ";Not-A.Brand";v="24"'.format(self.browser_version),
             'Sec-CH-UA-Mobile': '?0',
             'Sec-CH-UA-Platform': '"Windows"',
             'Sec-Fetch-Dest': 'empty',

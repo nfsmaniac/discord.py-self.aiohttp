@@ -3189,7 +3189,6 @@ class InviteFlags(BaseFlags):
         return 1 << 3
 
 
-
 @fill_with_flags()
 class AttachmentFlags(BaseFlags):
     r"""Wraps up the Discord Attachment flags
