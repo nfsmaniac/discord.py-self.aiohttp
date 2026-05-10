@@ -38,10 +38,8 @@ import aiohttp
 import yarl
 
 from . import utils
-from .activity import BaseActivity, Spotify
-from .enums import SpeakingState
 from .enums import SpeakingState, Status
-from .errors import ClientException, ConnectionClosed
+from .errors import ConnectionClosed
 from .flags import Capabilities
 from .tracking import HeadersContext
 
@@ -974,10 +972,9 @@ class DiscordVoiceWebSocket:
         self.secret_key: Optional[List[int]] = None
         self.voice_version: Optional[str] = None
         self.rtc_worker_version: Optional[str] = None
-        if hook:
-            self._hook = hook
+        self._hook: Callable[..., Coroutine[Any, Any, None]] = hook or self._default_hook
 
-    async def _hook(self, *args: Any) -> None:
+    async def _default_hook(self, *args: Any) -> None:
         pass
 
     async def send_as_json(self, data: Any) -> None:
@@ -1042,7 +1039,7 @@ class DiscordVoiceWebSocket:
 
         return ws
 
-    async def select_protocol(self, ip: str, port: int, mode: int) -> None:
+    async def select_protocol(self, ip: str, port: int, mode: str) -> None:
         payload = {
             'op': self.SELECT_PROTOCOL,
             'd': {

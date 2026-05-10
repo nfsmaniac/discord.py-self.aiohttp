@@ -60,7 +60,7 @@ from .help import HelpCommand, DefaultHelpCommand
 from .cog import Cog
 
 if TYPE_CHECKING:
-    from typing_extensions import Self, Unpack
+    from typing_extensions import Unpack
 
     import importlib.machinery
 
@@ -1054,8 +1054,7 @@ class BotBase(GroupMixin[None]):
         self,
         message: Message,
         /,
-    ) -> Context[Self]:  # type: ignore
-        ...
+    ) -> Context: ...
 
     @overload
     async def get_context(
@@ -1217,7 +1216,7 @@ class BotBase(GroupMixin[None]):
 
         ctx = await self.get_context(message)
         # the type of the invocation context's bot attribute will be correct
-        await self.invoke(ctx)  # type: ignore
+        await self.invoke(ctx)
 
     async def on_message(self, message: Message, /) -> None:
         await self.process_commands(message)

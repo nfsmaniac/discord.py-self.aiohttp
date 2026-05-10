@@ -830,7 +830,7 @@ class Guild(Hashable):
             is not a member of the guild, or the current user's member object is not cached.
         """
         self_id = self._state.self_id
-        return self.get_member(self_id)  # type: ignore
+        return self.get_member(self_id)
 
     def is_joined(self) -> bool:
         """Returns whether you are a full member of this guild.

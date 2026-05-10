@@ -163,7 +163,7 @@ _log = logging.getLogger(__name__)
 aiohttp.hdrs.WEBSOCKET = 'websocket'  # type: ignore
 
 
-async def json_or_text(response: Union[aiohttp.ClientResponse, requests.Response]) -> Union[Dict[str, Any], str]:
+async def json_or_text(response: Union[aiohttp.ClientResponse, Any]) -> Union[Dict[str, Any], str]:
     if isinstance(response, aiohttp.ClientResponse):
         text = await response.text(encoding='utf-8')
     else:
@@ -492,7 +492,7 @@ class Ratelimit:
         if use_clock or not reset_after:
             utc = datetime.timezone.utc
             now = datetime.datetime.now(utc)
-            reset = datetime.datetime.fromtimestamp(float(headers['X-Ratelimit-Reset']), utc)  # type: ignore
+            reset = datetime.datetime.fromtimestamp(float(headers['X-Ratelimit-Reset']), utc)
             self.reset_after = (reset - now).total_seconds()
         else:
             self.reset_after = float(reset_after)
@@ -636,7 +636,7 @@ class HTTPClient:
         self.loop: asyncio.AbstractEventLoop = loop
         self.client: Optional[Client] = client
         self.__asession: aiohttp.ClientSession = MISSING
-        self.__session: requests.AsyncSession[requests.Response] = MISSING
+        self.__session: Any = MISSING
         # Route key -> Bucket hash
         self._bucket_hashes: Dict[str, str] = {}
         # Bucket Hash + Major Parameters -> Rate limit
@@ -677,7 +677,7 @@ class HTTPClient:
         session = self.__session
         if session:
             try:
-                session.connector._close()  # type: ignore # Handled below
+                session.connector._close()
             except AttributeError:
                 pass
 
@@ -898,6 +898,7 @@ class HTTPClient:
 
                 try:
                     async with self.__session.request(method, url, **kwargs) as response:
+                        assert response is not None
                         log_fmt = '%s %s with %s has returned %s.'
                         log_params = [method, url, kwargs.get('data'), response.status]
                         if trace_id is not None:
@@ -1122,12 +1123,14 @@ class HTTPClient:
         if hash:
             headers['Content-MD5'] = hash
 
+        response: Optional[aiohttp.ClientResponse] = None
         for tries in range(5):
             if isinstance(file, File):
                 file.reset(seek=tries)
 
             try:
                 async with self.__session.put(url, data=getattr(file, 'fp', file), headers=headers) as response:
+                    assert response is not None
                     _log.debug('PUT %s with %s has returned %s.', url, file, response.status)
                     data = await json_or_text(response)
 
@@ -1157,12 +1160,12 @@ class HTTPClient:
                     continue
                 raise
 
-        if response is not None:
-            # We've run out of retries, raise
-            if response.status >= 500:
-                raise DiscordServerError(response, data)
+        assert response is not None
+        # We've run out of retries, raise
+        if response.status >= 500:
+            raise DiscordServerError(response, data)
 
-            raise HTTPException(response, data)
+        raise HTTPException(response, data)
 
     async def get_preferred_voice_regions(self) -> List[guild.RTCRegion]:
         async with self.__session.get('https://latency.discord.media/rtc') as resp:

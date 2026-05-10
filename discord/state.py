@@ -55,7 +55,7 @@ from math import ceil
 
 from discord_protos import UserSettingsType
 
-from .errors import ClientException, DiscordException, InvalidData, NotFound
+from .errors import ClientException, InvalidData, NotFound
 from .guild import Guild
 from .activity import BaseActivity, create_activity, Session
 from .user import User, ClientUser
@@ -105,7 +105,6 @@ from .tutorial import Tutorial
 from .experiment import UserExperiment, GuildExperiment, ApexExperiment
 from .metadata import Metadata
 from .directory import DirectoryEntry
-from .backoff import ExponentialBackoff
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -734,10 +733,10 @@ class GuildSubscriptions:
         # If it is, we need to flush the old payload and start a new one
         # If there isn't an old payload and the new payload is larger, this is impossible
         EMPTY: Any = {}
-        new_payload = self._pending.copy()
+        new_payload: Dict[str, Any] = self._pending.copy()
         for guild_id, subscriptions in changes.items():
             old = new_payload.get(guild_id, EMPTY)
-            new_payload[guild_id] = {**old, **subscriptions}  # type: ignore # ???
+            new_payload[guild_id] = {**old, **subscriptions}
 
         if len(utils._to_json(new_payload)) > self.MAX_PAYLOAD_SIZE:
             if len(utils._to_json(changes)) > self.MAX_PAYLOAD_SIZE:
@@ -1441,7 +1440,7 @@ class ConnectionState:
 
     async def _can_chunk_guild(self, guild: Guild) -> bool:
         if not guild.me:
-            await guild.query_members(user_ids=[self.self_id], cache=True)  # type: ignore # self_id is always present here
+            await guild.query_members(user_ids=[self.self_id], cache=True)
 
         return guild.me is not None and any(
             (
@@ -2115,7 +2114,7 @@ class ConnectionState:
         self.read_state_version = data.get('version', self.read_state_version)
 
         raw = RawUserFeatureAckEvent(data)
-        read_state = self.get_read_state(self.self_id, raw.type)  # type: ignore
+        read_state = self.get_read_state(self.self_id, raw.type)
         read_state.last_acked_id = int(data['entity_id'])
         self.dispatch('user_feature_ack', raw)
 
@@ -2944,7 +2943,7 @@ class ConnectionState:
         delay: Union[int, float] = MISSING,
     ) -> Union[List[Member], asyncio.Future[List[Member]]]:
         if not guild.me:
-            await guild.query_members(user_ids=[self.self_id], cache=True)  # type: ignore # self_id is always present here
+            await guild.query_members(user_ids=[self.self_id], cache=True)
 
         if (
             not chunk

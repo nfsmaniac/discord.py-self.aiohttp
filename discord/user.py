@@ -1082,10 +1082,10 @@ class User(BaseUser, discord.abc.Connectable, discord.abc.Messageable):
         return f'<User id={self.id} name={self.name!r} global_name={self.global_name!r} bot={self.bot}>'
 
     def _get_voice_client_key(self) -> Tuple[int, str]:
-        return self._state.self_id, 'self_id'  # type: ignore # self_id is always set at this point
+        return self._state.self_id, 'self_id'
 
     def _get_voice_state_pair(self) -> Tuple[int, int]:
-        return self._state.self_id, self.dm_channel.id  # type: ignore # self_id is always set at this point
+        return self._state.self_id, self.dm_channel.id  # type: ignore[union-attr]
 
     def _update_self(self, user: Union[PartialUserPayload, Tuple[()]]) -> Optional[Tuple[User, User]]:
         if len(user) == 0 or len(user) <= 1:  # Done because of typing

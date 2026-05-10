@@ -75,7 +75,6 @@ import sys
 from threading import Timer
 import types
 import typing
-import uuid
 import warnings
 import aiohttp
 import logging
@@ -95,12 +94,12 @@ else:
 _ZSTD_SOURCE: Literal['zstandard', 'compression.zstd'] | None = None
 
 try:
-    from zstandard import ZstdDecompressor  # type: ignore
+    from zstandard import ZstdDecompressor  # pyright: ignore[reportMissingImports]
 
     _ZSTD_SOURCE = 'zstandard'
 except ImportError:
     try:
-        from compression.zstd import ZstdDecompressor  # type: ignore
+        from compression.zstd import ZstdDecompressor  # pyright: ignore[reportMissingImports]
 
         _ZSTD_SOURCE = 'compression.zstd'
     except ImportError:
@@ -1339,9 +1338,11 @@ def evaluate_annotation(
         is_literal = False
         args = tp.__args__
         if not hasattr(tp, '__origin__'):
-            if PY_310 and tp.__class__ is types.UnionType:
-                converted = Union[args]
-                return evaluate_annotation(converted, globals, locals, cache)
+            if PY_310:
+                union_type = getattr(types, 'UnionType', None)
+                if union_type is not None and tp.__class__ is union_type:
+                    converted = Union[args]
+                    return evaluate_annotation(converted, globals, locals, cache)
 
             return tp
         if tp.__origin__ is Union:

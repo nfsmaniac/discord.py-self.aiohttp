@@ -394,7 +394,7 @@ class Client:
         proxy: Optional[str] = options.pop('proxy', None)
         proxy_auth: Optional[aiohttp.BasicAuth] = options.pop('proxy_auth', None)
         unsync_clock: bool = options.pop('assume_unsync_clock', True)
-        http_trace: Optional[aiohttp.TraceConfig] = options.pop('http_trace', None)
+        http_trace: Optional[aiohttp.TraceConfig] = options.pop('http_trace', None)  # type: ignore[assignment]
         max_ratelimit_timeout: Optional[float] = options.pop('max_ratelimit_timeout', None)
         self.captcha_handler: Optional[Callable[[CaptchaRequired, Client], Awaitable[str]]] = options.pop(
             'captcha_handler', None
@@ -3437,10 +3437,10 @@ class Client:
         users: List[_Snowflake] = [u.id for u in recipients]
         if len(users) == 1:
             # To create a group DM with one user, the client user must be included
-            users.append(state.self_id)  # type: ignore # user is always present when logged in
+            users.append(state.self_id)
 
         data = await state.http.start_group(users)
-        return GroupChannel(me=self.user, data=data, state=state)  # type: ignore # user is always present when logged in
+        return GroupChannel(me=self.user, data=data, state=state)  # type: ignore[arg-type]
 
     @overload
     async def send_friend_request(self, user: _UserTag, /) -> None: ...

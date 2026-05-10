@@ -51,7 +51,7 @@ if TYPE_CHECKING:
     from .parameters import Parameter
 
 try:
-    from annotationlib import call_annotate_function, get_annotate_from_class_namespace  # type: ignore
+    from annotationlib import call_annotate_function, get_annotate_from_class_namespace
 
     def get_annotations_from_namespace(namespace: Dict[str, Any]) -> Dict[str, Any]:
         # In Python 3.14, classes no longer get `__annotations__` and instead a function
@@ -61,7 +61,9 @@ try:
         # So format 3 is the one we're typically used to
         annotate = get_annotate_from_class_namespace(namespace)
         if annotate is not None:
-            return call_annotate_function(annotate, 3)  # type: ignore
+            result = call_annotate_function(annotate, 3)
+            assert isinstance(result, dict)
+            return result
         return namespace.get('__annotations__', {})
 
 except ImportError:
