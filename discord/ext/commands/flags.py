@@ -51,7 +51,7 @@ if TYPE_CHECKING:
     from .parameters import Parameter
 
 try:
-    from annotationlib import call_annotate_function, get_annotate_from_class_namespace # ignore
+    from annotationlib import call_annotate_function, get_annotate_from_class_namespace  # ignore[reportMissingImports]
 
     def get_annotations_from_namespace(namespace: Dict[str, Any]) -> Dict[str, Any]:
         # In Python 3.14, classes no longer get `__annotations__` and instead a function
