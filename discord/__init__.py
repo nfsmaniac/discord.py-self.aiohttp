@@ -12,7 +12,7 @@ __title__ = 'discord.py-self'
 __author__ = 'nfsmaniac'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2015-present Rapptz, 2021-present Dolfies, 2026-present nfsmaniac'
-__version__ = '2.2.0a-aiohttp'
+__version__ = '2.2.0a'
 
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 
