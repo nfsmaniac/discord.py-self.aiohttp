@@ -4,15 +4,15 @@ Discord API Wrapper
 
 A basic wrapper for the Discord user API.
 
-:copyright: (c) 2015-present Rapptz and 2021-present Dolfies
+:copyright: (c) 2015-present Rapptz, 2021-present Dolfies, 2026-present nfsmaniac
 :license: MIT, see LICENSE for more details.
 """
 
 __title__ = 'discord.py-self'
-__author__ = 'Dolfies'
+__author__ = 'nfsmaniac'
 __license__ = 'MIT'
-__copyright__ = 'Copyright 2015-present Rapptz and 2021-present Dolfies'
-__version__ = '2.2.0a'
+__copyright__ = 'Copyright 2015-present Rapptz, 2021-present Dolfies, 2026-present nfsmaniac'
+__version__ = '2.2.0a-aiohttp'
 
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
 

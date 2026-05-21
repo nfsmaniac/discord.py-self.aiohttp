@@ -1,4 +1,4 @@
-discord.py-self
+discord.py-self.aiohttp
 ================
 
 .. image:: https://img.shields.io/endpoint?color=neon&url=https%3A%2F%2Ftg.sumanjay.workers.dev%2Fdpy_self
@@ -15,6 +15,8 @@ discord.py-self
    :alt: PyPI downloads per month
 
 A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord's user API written in Python.
+Aim of this fork is to preserve simplicity and wide compatibility by not relying on machine-specific pre-compiled libraries, such as curl-impersonate.
+Use of `Discord.py-self <https://github.com/dolfies/discord.py-self>`_ upstream is recommended for most users, as it may better overcome potential challenges with Cloudflare's bot detection. However, this fork may be useful for users who prefer a more lightweight implementation, or those who are facing issues with curl_cffi library.
 
 | **Note:**
 | Automating user accounts is against the Discord ToS. This library is a proof of concept and I cannot recommend using it. Do so at your own risk.
@@ -24,6 +26,7 @@ A modern, easy-to-use, feature-rich, and async-ready API wrapper for Discord's u
 
 - `Rapptz <https://github.com/Rapptz>`_ for the original library this fork is based on. Without it, the project would not exist.
 - `arandomnewaccount <https://www.reddit.com/user/obviouslymymain123/>`_ for help when the project was first started.
+- `Dolfies <https://github.com/dolfies>`_ for maintaining the library and implementing most of the features.
 
 Key Features
 -------------
@@ -49,7 +52,7 @@ Key Features
 Installing
 ----------
 
-**Python 3.9 or higher is required.**
+**Python 3.10 or higher is required.**
 
 To install the library without full voice support, you can just run the following command:
 
