@@ -249,7 +249,7 @@ class HeadersContext:
     .. warning::
 
         Configuring your own header context from scratch is not recommended,
-        as it may lead to account termination by anti abuse systems.
+        as it may lead to account termination by anti-abuse systems.
 
     Parameters
     ----------
