@@ -96,6 +96,7 @@ if TYPE_CHECKING:
         channel,
         command,
         directory,
+        discovery,
         emoji,
         entitlements,
         experiment,
@@ -2619,6 +2620,7 @@ class HTTPClient:
         *,
         with_counts: bool = True,
         with_permissions: bool = True,
+        with_profile: bool = True,
         guild_scheduled_event_id: Optional[Snowflake] = None,
         input_value: Optional[str] = None,
     ) -> Response[Union[invite.PartialInvite, invite.InviteWithCounts]]:
@@ -2626,6 +2628,7 @@ class HTTPClient:
             'with_counts': str(with_counts).lower(),
             'with_expiration': 'true',  # No longer exists
             'with_permissions': str(with_permissions).lower(),
+            'with_profile': str(with_profile).lower(),
         }
         if input_value:
             params['inputValue'] = input_value
@@ -5165,3 +5168,11 @@ class HTTPClient:
     def join_hub_token(self, token: str) -> Response[hub.EmailDomainVerification]:
         payload = {'token': token}
         return self.request(Route('POST', '/guilds/automations/email-domain-lookup/verify'), json=payload)
+
+    # Discovery
+
+    def get_guild_profile(self, guild_id: Snowflake) -> Response[discovery.GuildProfile]:
+        return self.request(Route('GET', '/guilds/{guild_id}/profile', guild_id=guild_id))
+
+    def edit_guild_profile(self, guild_id: Snowflake, payload: Dict[str, Any]) -> Response[discovery.GuildProfile]:
+        return self.request(Route('PATCH', '/guilds/{guild_id}/profile', guild_id=guild_id), json=payload)
