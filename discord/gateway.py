@@ -42,6 +42,7 @@ from .enums import Status
 from .errors import ClientException, ConnectionClosed
 from .flags import Capabilities, SpeakingFlags
 from .voice_media import VoiceCodec, VoiceStream
+from .tracking import HeadersContext
 
 try:
     import davey  # type: ignore
